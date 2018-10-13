@@ -6,7 +6,7 @@ defmodule ATECC508A.Date do
   @doc """
   Decode an issue date/expiration bitstring
   """
-  @spec decode(<<_::24>>) :: {DateTime.t(), DateTime.t()}
+  @spec decode(ATECC508A.encoded_dates()) :: {DateTime.t(), DateTime.t()}
   def decode(<<raw_year::5, month::4, day::5, hour::5, expire_years::5>>) do
     issue_date = %DateTime{
       year: raw_year + 2000,
@@ -42,7 +42,7 @@ defmodule ATECC508A.Date do
 
   Important: the max issue year is 2031!!
   """
-  @spec encode(DateTime.t(), DateTime.t()) :: <<_::24>>
+  @spec encode(DateTime.t(), DateTime.t()) :: ATECC508A.encoded_dates()
   def encode(issue_date, expire_date) do
     expire_years = calc_expire_years(issue_date, expire_date)
     issue_year = calc_issue_year(issue_date.year)

@@ -1,10 +1,26 @@
 defmodule ATECC508A do
   @moduledoc """
-  Documentation for Atecc508a.
+  The ATECC508A is an authentication device used for storing private keys
+  and other data securely.
   """
 
-  @type encoded_dates::<<_::24>>
+  @typedoc """
+  This represents the ATECC508A 9-byte device serial number
+  """
+  @type serial_number :: <<_::72>>
 
+  @typedoc """
+  ATECC508A compressed certificates have 16-byte serial numbers
+  """
+  @type cert_serial_number :: <<_::128>>
 
+  @typedoc """
+  ATECC508A compressed certificates have 3 byte dates. See ATECC508A.Date.
+  """
+  @type encoded_dates :: <<_::24>>
 
+  @typedoc """
+  An ECC P256 public key
+  """
+  @type ecc_public_key :: <<_::512>>
 end

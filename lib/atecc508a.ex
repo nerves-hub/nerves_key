@@ -23,4 +23,16 @@ defmodule ATECC508A do
   An ECC P256 public key
   """
   @type ecc_public_key :: <<_::512>>
+
+  @typedoc """
+  Microchip P256 compressed certificate
+
+  See Atmel-8974A app note
+  """
+  @type compressed_cert :: <<_::576>>
+
+  @typedoc """
+  A SHA256 hash
+  """
+  @type sha256 :: <<_::256>>
 end

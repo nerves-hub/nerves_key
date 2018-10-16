@@ -50,6 +50,15 @@ defmodule ATECC508A.Date do
     <<issue_year::5, issue_date.month::4, issue_date.day::5, issue_date.hour::5, expire_years::5>>
   end
 
+  @doc """
+  Check that the specified dates can be represented in a compressed certificate.
+  """
+  def valid_dates?(issue_date, expire_date) do
+    {new_issue_date, new_expire_date} = encode(issue_date, expire_date) |> decode()
+
+    new_issue_date == issue_date and new_expire_date == expire_date
+  end
+
   defp max_date() do
     # See RFC 5280 4.1.2.5.2
     %DateTime{

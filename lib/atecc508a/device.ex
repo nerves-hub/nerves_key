@@ -4,12 +4,12 @@ defmodule ATECC508A.Device do
   alias ElixirCircuits.I2C
 
   @unprovisioned_address 0x60
-@atecc508a_wake_delay_us 1500
-@atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
+  @atecc508a_wake_delay_us 1500
+  @atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
 
-@atecc508a_zone_config 0
-@atecc508a_zone_otp   1
-@atecc508a_zone_data   2
+  @atecc508a_zone_config 0
+  @atecc508a_zone_otp 1
+  @atecc508a_zone_data 2
 
   @type provisioning_state :: :unconfigured | :configured | :provisioned | :errored
 
@@ -137,37 +137,6 @@ defmodule ATECC508A.Device do
     # I2C.write_read(i2c, @unprovisioned_address)
   end
 
-  import Bitwise
-
-  @atecc508a_polynomial 0x8005
-
-  defp shift(crc, 0) when crc >= 0x8000, do: (crc <<< 1) ^^^ (@atecc508a_polynomial + 0x10000)
-  defp shift(crc, 0) when crc < 0x8000, do: (crc <<< 1) ^^^ @atecc508a_polynomial
-  defp shift(crc, 1) when crc >= 0x8000, do: (crc <<< 1) ^^^ 0x10000
-  defp shift(crc, 1) when crc < 0x8000, do: (crc <<< 1)
-
-  defp do_crc(crc, <<>>), do: crc
-  defp do_crc(crc, <<a::1, b::1, c::1, d::1, e::1, f::1, g::1, h::1, rest::binary>>) do
-    crc
-    |> shift(a)
-    |> shift(b)
-    |> shift(c)
-    |> shift(d)
-    |> shift(e)
-    |> shift(f)
-    |> shift(g)
-    |> shift(h)
-    |> do_crc(rest)
-  end
-
-  def calc_crc(message) do
-    # See Atmel CryptoAuthentication Data Zone CRC Calculation application note
-    crc = do_crc(0, message)
-
-    # ATECC508A expects little endian
-    <<crc::little-16>>
-  end
-
   defp wakeup(state) do
     # See ATECC508A 6.1 for the wakeup sequence.
     #
@@ -178,9 +147,10 @@ defmodule ATECC508A.Device do
     I2C.write_device(state.i2c, 0, <<0>>)
 
     # Wait for the device to wake up for real
-    microsleep(@atecc508a_wake_delay_us);
+    microsleep(@atecc508a_wake_delay_us)
 
     # Check that it's awake by reading its signature
+
     {:ok, @atecc508a_signature} = I2C.read(state.i2c, 4)
   end
 

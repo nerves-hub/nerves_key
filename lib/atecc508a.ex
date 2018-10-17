@@ -35,4 +35,9 @@ defmodule ATECC508A do
   A SHA256 hash
   """
   @type sha256 :: <<_::256>>
+
+  @typedoc """
+  A CRC16 as computed by the ATECC508A
+  """
+  @type crc16 :: <<_::16>>
 end

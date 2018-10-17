@@ -3,7 +3,13 @@ defmodule ATECC508A.Device do
 
   alias ElixirCircuits.I2C
 
-  @unprovisioned_address 0xC0
+  @unprovisioned_address 0x60
+@atecc508a_wake_delay_us 1500
+@atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
+
+@atecc508a_zone_config 0
+@atecc508a_zone_otp   1
+@atecc508a_zone_data   2
 
   @type provisioning_state :: :unconfigured | :configured | :provisioned | :errored
 
@@ -21,16 +27,16 @@ defmodule ATECC508A.Device do
   end
 
   @doc """
-  Return the state of the module
+  Return the state of the device
 
   * :unconfigured - this is a fresh ATECC508A that hasn't been configured yet
   * :configured - the configuration has been programmed and locked, but required data hasn't been written
   * :provisioned - the device has been provisioned and is locked
   * :errored - the device has an unexpected configuration or it's locked with unexpected data
   """
-  @spec state() :: provisioning_state()
-  def state() do
-    :unconfigured
+  @spec device_state() :: provisioning_state()
+  def device_state() do
+    GenServer.call(__MODULE__, :device_state)
   end
 
   @doc """
@@ -40,7 +46,7 @@ defmodule ATECC508A.Device do
   """
   @spec configure() :: :ok | {:error, String.t()}
   def configure() do
-    {:error, "unimplemented"}
+    GenServer.call(__MODULE__, :configure)
   end
 
   @doc """
@@ -48,9 +54,9 @@ defmodule ATECC508A.Device do
 
   The public key part is returned on success so that it may be signed.
   """
-  @spec create_device_key_pair() :: {:ok, ATECC508A.ecc_public_key()} | {:error, String.t}
+  @spec create_device_key_pair() :: {:ok, ATECC508A.ecc_public_key()} | {:error, String.t()}
   def create_device_key_pair() do
-    {:error, "unimplemented"}
+    GenServer.call(__MODULE__, :create_device_key_pair)
   end
 
   @doc """
@@ -61,13 +67,12 @@ defmodule ATECC508A.Device do
   call, none of this data can change. If you made a mistake, cry a little and
   then replace the ATECC508 with a new one.
   """
-  @spec provision(ATECC508A.ProvisioningInfo.t()) :: :ok | {:error, String.t}
+  @spec provision(ATECC508A.ProvisioningInfo.t()) :: :ok | {:error, String.t()}
   def provision(provisioning_info) do
-
-    {:error, "unimplemented"}
+    GenServer.call(__MODULE__, {:provision, provisioning_info})
   end
 
-    @doc """
+  @doc """
   Return the device's X.509 certificate
 
   The device must be provisioned for this to succeed.
@@ -92,13 +97,12 @@ defmodule ATECC508A.Device do
   """
   @spec read_info() :: ATECC508A.Info.t()
   def read_info() do
-    %ATECC508A.Info{}
+    GenServer.call(__MODULE__, :read_info)
   end
 
   def init(_args) do
-
     device = Application.get_env(:atecc508a, :i2c_device, "/dev/i2c-1")
-    address = Application.get_env(:atecc508a, :address, 0xB0)
+    address = Application.get_env(:atecc508a, :i2c_address, 0x58)
 
     {:ok, i2c} = I2C.open(device, address)
 
@@ -106,7 +110,86 @@ defmodule ATECC508A.Device do
   end
 
   def handle_continue(:init, state) do
-
     {:noreply, state}
+  end
+
+  def handle_call(:read_info, _from, state) do
+    rc = %ATECC508A.Info{}
+    {:reply, rc, state}
+  end
+
+  def handle_call(:configure, _from, state) do
+    rc = %ATECC508A.Info{}
+    {:reply, rc, state}
+  end
+
+  def handle_call(:create_device_key_pair, _from, state) do
+    rc = %ATECC508A.Info{}
+    {:reply, rc, state}
+  end
+
+  def handle_call({:provision, provisioning_info}, _from, state) do
+    rc = %ATECC508A.Info{}
+    {:reply, rc, state}
+  end
+
+  defp device_configured?(i2c) do
+    # I2C.write_read(i2c, @unprovisioned_address)
+  end
+
+  import Bitwise
+
+  @atecc508a_polynomial 0x8005
+
+  defp shift(crc, 0) when crc >= 0x8000, do: (crc <<< 1) ^^^ (@atecc508a_polynomial + 0x10000)
+  defp shift(crc, 0) when crc < 0x8000, do: (crc <<< 1) ^^^ @atecc508a_polynomial
+  defp shift(crc, 1) when crc >= 0x8000, do: (crc <<< 1) ^^^ 0x10000
+  defp shift(crc, 1) when crc < 0x8000, do: (crc <<< 1)
+
+  defp do_crc(crc, <<>>), do: crc
+  defp do_crc(crc, <<a::1, b::1, c::1, d::1, e::1, f::1, g::1, h::1, rest::binary>>) do
+    crc
+    |> shift(a)
+    |> shift(b)
+    |> shift(c)
+    |> shift(d)
+    |> shift(e)
+    |> shift(f)
+    |> shift(g)
+    |> shift(h)
+    |> do_crc(rest)
+  end
+
+  def calc_crc(message) do
+    # See Atmel CryptoAuthentication Data Zone CRC Calculation application note
+    crc = do_crc(0, message)
+
+    # ATECC508A expects little endian
+    <<crc::little-16>>
+  end
+
+  defp wakeup(state) do
+    # See ATECC508A 6.1 for the wakeup sequence.
+    #
+    # Write to address 0 to pull SDA down for the wakeup interval (60 uS).
+    # Since only 8-bits get through, the I2C speed needs to be < 133 KHz for
+    # this to work. This "fails" since nobody will ACK the write and that's
+    # expected.
+    I2C.write_device(state.i2c, 0, <<0>>)
+
+    # Wait for the device to wake up for real
+    microsleep(@atecc508a_wake_delay_us);
+
+    # Check that it's awake by reading its signature
+    {:ok, @atecc508a_signature} = I2C.read(state.i2c, 4)
+  end
+
+  defp sleep(state) do
+    # See ATECC508A 6.2 for the sleep sequence.
+    I2C.write(state.i2c, <<0x01>>)
+  end
+
+  defp microsleep(usec) do
+    Process.sleep(round((usec + 999) / 1000))
   end
 end

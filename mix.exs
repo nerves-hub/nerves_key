@@ -21,7 +21,8 @@ defmodule Atecc508a.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:x509, "~> 0.3"},
+      # {:x509, "~> 0.5"},
+      {:x509, github: "mobileoverlord/x509", branch: "template-update"},
       {:elixir_circuits_i2c, github: "elixir-circuits/i2c"}
       # {:elixir_circuits_i2c, path: "../elixir-circuits/i2c"}
     ]

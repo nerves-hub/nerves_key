@@ -2,5 +2,5 @@
   "elixir_circuits_i2c": {:git, "https://github.com/elixir-circuits/i2c.git", "60b45c6959f302b688558cb083f3f27aed4e082e", []},
   "elixir_make": {:hex, :elixir_make, "0.4.2", "332c649d08c18bc1ecc73b1befc68c647136de4f340b548844efc796405743bf", [:mix], [], "hexpm"},
   "i2c": {:git, "https://github.com/elixir-circuits/i2c.git", "34275072c5dd30ac52c89a6d775e74f5bba2fb8f", []},
-  "x509": {:hex, :x509, "0.4.0", "7af40e355a6021a0fa85173cf3f5529c31fa3847e2b9e896d228e91b5eff2f65", [:mix], [], "hexpm"},
+  "x509": {:git, "https://github.com/mobileoverlord/x509.git", "10397d0798e70604aacf764dae2d15e3b11e9dcc", [branch: "template-update"]},
 }

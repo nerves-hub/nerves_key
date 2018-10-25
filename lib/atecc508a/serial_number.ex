@@ -3,6 +3,8 @@ defmodule ATECC508A.SerialNumber do
   Compute X.509 certificate serial numbers
   """
 
+  @serial_number_bytes 20
+
   @doc """
   Compute a certificate serial number based on the device's
   9-byte serial number and the encoded issue/expire date.
@@ -26,5 +28,12 @@ defmodule ATECC508A.SerialNumber do
   def from_public_key(public_key, encoded_dates) do
     hash = :crypto.hash(:sha256, [public_key, encoded_dates])
     <<0b01::2, hash::bitstring-126>>
+  end
+
+  def random(bytes \\ @serial_number_bytes) do
+    <<i::unsigned-size(bytes)-unit(8)>> =
+      :crypto.strong_rand_bytes(bytes)
+
+    i
   end
 end

@@ -1,9 +1,11 @@
 defmodule ATECC508A.Device do
   use GenServer
 
-  alias ElixirCircuits.I2C
+  alias Circuits.I2C
 
-  @unprovisioned_address 0x60
+  @default_unprovisioned_address 0x60
+  @default_provisioned_address 0x58
+
   @atecc508a_wake_delay_us 1500
   @atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
 
@@ -101,10 +103,10 @@ defmodule ATECC508A.Device do
   end
 
   def init(_args) do
-    device = Application.get_env(:atecc508a, :i2c_device, "/dev/i2c-1")
-    address = Application.get_env(:atecc508a, :i2c_address, 0x58)
+    device = Application.get_env(:atecc508a, :i2c_device, "i2c-1")
+    address = Application.get_env(:atecc508a, :i2c_address, @default_provisioned_address)
 
-    {:ok, i2c} = I2C.open(device, address)
+    {:ok, i2c} = I2C.open(device)
 
     {:ok, %State{i2c: i2c, address: address}, {:continue, :init}}
   end
@@ -144,19 +146,19 @@ defmodule ATECC508A.Device do
     # Since only 8-bits get through, the I2C speed needs to be < 133 KHz for
     # this to work. This "fails" since nobody will ACK the write and that's
     # expected.
-    I2C.write_device(state.i2c, 0, <<0>>)
+    I2C.write(state.i2c, 0, <<0>>)
 
     # Wait for the device to wake up for real
     microsleep(@atecc508a_wake_delay_us)
 
     # Check that it's awake by reading its signature
 
-    {:ok, @atecc508a_signature} = I2C.read(state.i2c, 4)
+    {:ok, @atecc508a_signature} = I2C.read(state.i2c, state.address, 4)
   end
 
   defp sleep(state) do
     # See ATECC508A 6.2 for the sleep sequence.
-    I2C.write(state.i2c, <<0x01>>)
+    I2C.write(state.i2c, state.address, <<0x01>>)
   end
 
   defp microsleep(usec) do

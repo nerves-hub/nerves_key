@@ -23,8 +23,7 @@ defmodule Atecc508a.MixProject do
     [
       # {:x509, "~> 0.5"},
       {:x509, github: "mobileoverlord/x509", branch: "template-update"},
-      {:elixir_circuits_i2c, github: "elixir-circuits/i2c"}
-      # {:elixir_circuits_i2c, path: "../elixir-circuits/i2c"}
+      {:circuits_i2c, "~> 0.1"}
     ]
   end
 end

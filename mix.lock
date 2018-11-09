@@ -1,4 +1,5 @@
 %{
+  "circuits_i2c": {:hex, :circuits_i2c, "0.1.0", "852e53ce11322222fdaa6c1d36237038b56f8fc41fc9fbcaa09c40fe561386ca", [:make, :mix], [{:elixir_make, "~> 0.4", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm"},
   "elixir_circuits_i2c": {:git, "https://github.com/elixir-circuits/i2c.git", "60b45c6959f302b688558cb083f3f27aed4e082e", []},
   "elixir_make": {:hex, :elixir_make, "0.4.2", "332c649d08c18bc1ecc73b1befc68c647136de4f340b548844efc796405743bf", [:mix], [], "hexpm"},
   "i2c": {:git, "https://github.com/elixir-circuits/i2c.git", "34275072c5dd30ac52c89a6d775e74f5bba2fb8f", []},

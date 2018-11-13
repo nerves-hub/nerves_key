@@ -13,50 +13,56 @@ defmodule ATECC508A.CertificateTest do
 
     public_key = X509.PublicKey.derive(private_key)
 
-    serial = ATECC508A.SerialNumber.random()
+    serial = random_sn()
 
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/O=MyOrg", signer, signer_key)
+    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
     assert X509.Certificate.serial(otp_cert) == serial
   end
 
   test "compress", %{ca: signer, ca_key: signer_key} do
-    private_key =
-      ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
+    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
 
     public_key = X509.PublicKey.derive(private_key)
 
-    serial = ATECC508A.SerialNumber.random()
+    serial = random_sn()
 
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/O=MyOrg", signer, signer_key)
+    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
 
     compressed = ATECC508A.Certificate.compress(otp_cert)
     assert byte_size(compressed) == 72
   end
 
   test "decompress", %{ca: signer, ca_key: signer_key} do
-    private_key =
-      ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
+    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
 
     public_key = X509.PublicKey.derive(private_key)
 
-    serial = ATECC508A.SerialNumber.random()
+    serial = random_sn()
 
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/O=MyOrg", signer, signer_key)
+    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
 
     compressed = ATECC508A.Certificate.compress(otp_cert)
-    decompressed = ATECC508A.Certificate.decompress(compressed, public_key, "/O=MyOrg", fn(_) -> serial end, fn(_) -> signer end)
+
+    decompressed =
+      ATECC508A.Certificate.decompress(
+        compressed,
+        public_key,
+        "/CN=1234",
+        fn _ -> serial end,
+        fn _ -> signer end
+      )
+
     assert otp_cert == decompressed
   end
 
   test "compress and decompress signature", %{ca: signer, ca_key: signer_key} do
-    private_key =
-      ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
+    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
 
     public_key = X509.PublicKey.derive(private_key)
 
-    serial = ATECC508A.SerialNumber.random()
+    serial = random_sn()
 
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/O=MyOrg", signer, signer_key)
+    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
 
     signature = ATECC508A.Certificate.signature(otp_cert)
 
@@ -65,14 +71,13 @@ defmodule ATECC508A.CertificateTest do
   end
 
   test "compress and decompress validity", %{ca: signer, ca_key: signer_key} do
-    private_key =
-      ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
+    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
 
     public_key = X509.PublicKey.derive(private_key)
 
-    serial = ATECC508A.SerialNumber.random()
+    serial = random_sn()
 
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/O=MyOrg", signer, signer_key)
+    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
 
     validity = X509.Certificate.validity(otp_cert)
 
@@ -83,7 +88,7 @@ defmodule ATECC508A.CertificateTest do
 
   defp generate_ca() do
     opts = [
-      serial: ATECC508A.SerialNumber.random(),
+      serial: random_sn(),
       hash: ATECC508A.Certificate.hash(),
       extensions: [
         key_usage: X509.Certificate.Extension.key_usage([:keyCertSign, :cRLSign]),
@@ -100,4 +105,10 @@ defmodule ATECC508A.CertificateTest do
     %{ca: ca, ca_key: ca_key}
   end
 
+  defp random_sn() do
+    bytes = 20
+    <<i::unsigned-size(bytes)-unit(8)>> = :crypto.strong_rand_bytes(bytes)
+
+    i
+  end
 end

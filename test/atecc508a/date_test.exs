@@ -1,4 +1,4 @@
-defmodule ATECC508ATest do
+defmodule ATECC508A.DateTest do
   use ExUnit.Case
   doctest ATECC508A
 

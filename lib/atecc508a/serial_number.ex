@@ -29,11 +29,4 @@ defmodule ATECC508A.SerialNumber do
     hash = :crypto.hash(:sha256, [public_key, encoded_dates])
     <<0b01::2, hash::bitstring-126>>
   end
-
-  def random(bytes \\ @serial_number_bytes) do
-    <<i::unsigned-size(bytes)-unit(8)>> =
-      :crypto.strong_rand_bytes(bytes)
-
-    i
-  end
 end

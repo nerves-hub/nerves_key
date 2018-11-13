@@ -1,4 +1,4 @@
-defmodule CRCTest do
+defmodule ATECC508A.CRCTest do
   use ExUnit.Case
 
   alias ATECC508A.CRC

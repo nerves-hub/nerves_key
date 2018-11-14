@@ -5,10 +5,18 @@ defmodule Atecc508a.MixProject do
     [
       app: :atecc508a,
       version: "0.1.0",
+      description: description(),
+      package: package(),
+      source_url: "https://github.com/fhunleth/atecc508a",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      docs: [extras: ["README.md"], main: "readme"],
+      deps: deps(),
+      dialyzer: [
+        plt_add_apps: [:public_key, :asn1, :crypto],
+        ignore_warnings: "dialyzer.ignore-warnings"
+      ]
     ]
   end
 
@@ -22,11 +30,24 @@ defmodule Atecc508a.MixProject do
     ]
   end
 
+  defp description do
+    "Elixir support for the ATECC508A/608A Cryptoauthentication chips"
+  end
+
+  defp package do
+    %{
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => "https://github.com/fhunleth/atecc508a"}
+    }
+  end
+
   defp deps do
     [
       # {:x509, "~> 0.5"},
       {:x509, github: "mobileoverlord/x509", branch: "template-update"},
-      {:circuits_i2c, "~> 0.1"}
+      {:circuits_i2c, "~> 0.1"},
+      {:ex_doc, "~> 0.11", only: :dev, runtime: false},
+      {:dialyxir, "1.0.0-rc.4", only: :dev, runtime: false}
     ]
   end
 end

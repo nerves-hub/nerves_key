@@ -3,8 +3,6 @@ defmodule ATECC508A.SerialNumber do
   Compute X.509 certificate serial numbers
   """
 
-  @serial_number_bytes 20
-
   @doc """
   Compute a certificate serial number based on the device's
   9-byte serial number and the encoded issue/expire date.

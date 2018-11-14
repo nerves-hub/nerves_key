@@ -1,17 +1,14 @@
 defmodule ATECC508A.CertificateTest do
   use ExUnit.Case
   doctest ATECC508A.Certificate
+  alias ATECC508A.Sim508A
 
   setup_all do
     generate_ca()
   end
 
   test "new", %{ca: signer, ca_key: signer_key} do
-    private_key =
-      ATECC508A.Certificate.curve()
-      |> X509.PrivateKey.new_ec()
-
-    public_key = X509.PublicKey.derive(private_key)
+    public_key = Sim508A.otp_genkey()
 
     serial = random_sn()
 
@@ -20,9 +17,7 @@ defmodule ATECC508A.CertificateTest do
   end
 
   test "compress", %{ca: signer, ca_key: signer_key} do
-    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
-
-    public_key = X509.PublicKey.derive(private_key)
+    public_key = Sim508A.otp_genkey()
 
     serial = random_sn()
 
@@ -33,9 +28,7 @@ defmodule ATECC508A.CertificateTest do
   end
 
   test "decompress", %{ca: signer, ca_key: signer_key} do
-    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
-
-    public_key = X509.PublicKey.derive(private_key)
+    public_key = Sim508A.otp_genkey()
 
     serial = random_sn()
 
@@ -56,9 +49,7 @@ defmodule ATECC508A.CertificateTest do
   end
 
   test "compress and decompress signature", %{ca: signer, ca_key: signer_key} do
-    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
-
-    public_key = X509.PublicKey.derive(private_key)
+    public_key = Sim508A.otp_genkey()
 
     serial = random_sn()
 
@@ -71,9 +62,7 @@ defmodule ATECC508A.CertificateTest do
   end
 
   test "compress and decompress validity", %{ca: signer, ca_key: signer_key} do
-    private_key = ATECC508A.Certificate.curve() |> X509.PrivateKey.new_ec()
-
-    public_key = X509.PublicKey.derive(private_key)
+    public_key = Sim508A.otp_genkey()
 
     serial = random_sn()
 

@@ -14,7 +14,6 @@ defmodule ATECC508A.Sim508A do
     <<1, 2, 3, 4, 5, 6, 7, 8, 9>>
   end
 
-
   @doc """
   "Create" a public/private key pair; return the public key in
   OTP record format.
@@ -28,7 +27,6 @@ defmodule ATECC508A.Sim508A do
   "Create" a public/private key pair, but return the public key as bytes
   """
   def genkey() do
-
-
+    nil
   end
 end

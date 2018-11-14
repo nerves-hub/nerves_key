@@ -1,15 +1,17 @@
-defmodule ATECC508A.Date do
+defmodule ATECC508A.Validity do
+  @era 2000
+
   @moduledoc """
   Handle the ATECC508's encoded dates
   """
 
   @doc """
-  Decode an issue date/expiration bitstring
+  Decompress an issue date/expiration bitstring
   """
-  @spec decode(ATECC508A.encoded_dates()) :: {DateTime.t(), DateTime.t()}
-  def decode(<<raw_year::5, month::4, day::5, hour::5, expire_years::5>>) do
+  @spec decompress(ATECC508A.encoded_dates()) :: {DateTime.t(), DateTime.t()}
+  def decompress(<<raw_year::5, month::4, day::5, hour::5, expire_years::5>>) do
     issue_date = %DateTime{
-      year: raw_year + 2000,
+      year: raw_year + @era,
       month: month,
       day: day,
       hour: hour,
@@ -34,7 +36,7 @@ defmodule ATECC508A.Date do
   end
 
   @doc """
-  Encode an issue date/expiration bitstring
+  Compress an issue date/expiration to a bitstring
 
   This function can easily lose precision on the dates and times since
   so little is encoded. If accepting arbitrary datetimes, you'll want
@@ -42,8 +44,8 @@ defmodule ATECC508A.Date do
 
   Important: the max issue year is 2031!!
   """
-  @spec encode(DateTime.t(), DateTime.t()) :: ATECC508A.encoded_dates()
-  def encode(issue_date, expire_date) do
+  @spec compress(DateTime.t(), DateTime.t()) :: ATECC508A.encoded_dates()
+  def compress(issue_date, expire_date) do
     expire_years = calc_expire_years(issue_date, expire_date)
     issue_year = calc_issue_year(issue_date.year)
 
@@ -54,7 +56,7 @@ defmodule ATECC508A.Date do
   Check that the specified dates can be represented in a compressed certificate.
   """
   def valid_dates?(issue_date, expire_date) do
-    {new_issue_date, new_expire_date} = encode(issue_date, expire_date) |> decode()
+    {new_issue_date, new_expire_date} = compress(issue_date, expire_date) |> decompress()
 
     new_issue_date == issue_date and new_expire_date == expire_date
   end

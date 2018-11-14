@@ -3,8 +3,9 @@ defmodule ATECC508A.Device do
 
   alias Circuits.I2C
 
-  @default_unprovisioned_address 0x60
-  @default_provisioned_address 0x58
+  # @default_unprovisioned_address 0x60
+  # 0x58
+  @default_provisioned_address 0x60
 
   @atecc508a_wake_delay_us 1500
   @atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
@@ -79,7 +80,7 @@ defmodule ATECC508A.Device do
 
   The device must be provisioned for this to succeed.
   """
-  @spec device_certificate() :: X509.Certificate.t()
+  # @spec device_certificate() :: X509.Certificate.t()
   def device_certificate() do
     true
   end
@@ -89,7 +90,7 @@ defmodule ATECC508A.Device do
 
   The device must be provisioned for this to succeed.
   """
-  @spec signer_certificate() :: X509.Certificate.t()
+  # @spec signer_certificate() :: X509.Certificate.t()
   def signer_certificate() do
     true
   end
@@ -162,6 +163,7 @@ defmodule ATECC508A.Device do
   end
 
   defp microsleep(usec) do
-    Process.sleep(round((usec + 999) / 1000))
+    msec = round(:math.ceil(usec / 1000))
+    Process.sleep(msec)
   end
 end

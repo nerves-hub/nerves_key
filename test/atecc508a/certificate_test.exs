@@ -9,19 +9,28 @@ defmodule ATECC508A.CertificateTest do
 
   test "new", %{ca: signer, ca_key: signer_key} do
     public_key = Sim508A.otp_genkey()
+    ecc508a_sn = Sim508A.serial_number()
+    manu_sn = "1234"
 
-    serial = random_sn()
+    ecc508a_validity =
+      ATECC508A.Validity.create_compatible_validity(31)
+      |> ATECC508A.Validity.compress()
 
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
-    assert X509.Certificate.serial(otp_cert) == serial
+    cert_sn = ATECC508A.SerialNumber.from_device_sn(ecc508a_sn, ecc508a_validity)
+
+    otp_cert =
+      ATECC508A.Certificate.new_device(public_key, ecc508a_sn, manu_sn, signer, signer_key)
+
+    assert X509.Certificate.serial(otp_cert) == cert_sn
   end
 
   test "compress", %{ca: signer, ca_key: signer_key} do
     public_key = Sim508A.otp_genkey()
+    ecc508a_sn = Sim508A.serial_number()
+    manu_sn = "1234"
 
-    serial = random_sn()
-
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
+    otp_cert =
+      ATECC508A.Certificate.new_device(public_key, ecc508a_sn, manu_sn, signer, signer_key)
 
     compressed = ATECC508A.Certificate.compress(otp_cert)
     assert byte_size(compressed) == 72
@@ -29,10 +38,17 @@ defmodule ATECC508A.CertificateTest do
 
   test "decompress", %{ca: signer, ca_key: signer_key} do
     public_key = Sim508A.otp_genkey()
+    ecc508a_sn = Sim508A.serial_number()
+    manu_sn = "1234"
 
-    serial = random_sn()
+    ecc508a_validity =
+      ATECC508A.Validity.create_compatible_validity(31)
+      |> ATECC508A.Validity.compress()
 
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
+    cert_sn = ATECC508A.SerialNumber.from_device_sn(ecc508a_sn, ecc508a_validity)
+
+    otp_cert =
+      ATECC508A.Certificate.new_device(public_key, ecc508a_sn, manu_sn, signer, signer_key)
 
     compressed = ATECC508A.Certificate.compress(otp_cert)
 
@@ -40,8 +56,8 @@ defmodule ATECC508A.CertificateTest do
       ATECC508A.Certificate.decompress(
         compressed,
         public_key,
-        "/CN=1234",
-        fn _ -> serial end,
+        "/CN=#{manu_sn}",
+        fn _ -> cert_sn end,
         fn _ -> signer end
       )
 
@@ -50,10 +66,11 @@ defmodule ATECC508A.CertificateTest do
 
   test "compress and decompress signature", %{ca: signer, ca_key: signer_key} do
     public_key = Sim508A.otp_genkey()
+    ecc508a_sn = Sim508A.serial_number()
+    manu_sn = "1234"
 
-    serial = random_sn()
-
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
+    otp_cert =
+      ATECC508A.Certificate.new_device(public_key, ecc508a_sn, manu_sn, signer, signer_key)
 
     signature = ATECC508A.Certificate.signature(otp_cert)
 
@@ -63,10 +80,11 @@ defmodule ATECC508A.CertificateTest do
 
   test "compress and decompress validity", %{ca: signer, ca_key: signer_key} do
     public_key = Sim508A.otp_genkey()
+    ecc508a_sn = Sim508A.serial_number()
+    manu_sn = "1234"
 
-    serial = random_sn()
-
-    otp_cert = ATECC508A.Certificate.new(public_key, serial, "/CN=1234", signer, signer_key)
+    otp_cert =
+      ATECC508A.Certificate.new_device(public_key, ecc508a_sn, manu_sn, signer, signer_key)
 
     validity = X509.Certificate.validity(otp_cert)
 

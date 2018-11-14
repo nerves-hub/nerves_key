@@ -6,6 +6,20 @@ defmodule ATECC508A.Validity do
   """
 
   @doc """
+  Create a compatible date range for X.509 certificates that need to be compressed.
+  """
+  @spec create_compatible_validity(non_neg_integer()) :: {DateTime.t(), DateTime.t()}
+  def create_compatible_validity(years) do
+    now =
+      DateTime.utc_now()
+      |> trim_time()
+
+    not_before = now
+    not_after = Map.put(now, :year, now.year + years)
+    {not_before, not_after}
+  end
+
+  @doc """
   Decompress an issue date/expiration bitstring
   """
   @spec decompress(ATECC508A.encoded_dates()) :: {DateTime.t(), DateTime.t()}
@@ -53,6 +67,14 @@ defmodule ATECC508A.Validity do
   end
 
   @doc """
+  Convenience function for compressing issue date/expiration tuples
+  """
+  @spec compress({DateTime.t(), DateTime.t()}) :: ATECC508A.encoded_dates()
+  def compress({issue_date, expire_date}) do
+    compress(issue_date, expire_date)
+  end
+
+  @doc """
   Check that the specified dates can be represented in a compressed certificate.
   """
   def valid_dates?(issue_date, expire_date) do
@@ -90,5 +112,12 @@ defmodule ATECC508A.Validity do
       delta_years > 31 -> 0
       true -> delta_years
     end
+  end
+
+  defp trim_time(datetime) do
+    datetime
+    |> Map.put(:minute, 0)
+    |> Map.put(:second, 0)
+    |> Map.put(:microsecond, {0, 0})
   end
 end

@@ -8,7 +8,7 @@ defmodule ATECC508A.Certificate do
 
   import X509.ASN1, except: [extension: 2, basic_constraints: 1]
   alias X509.{PublicKey, RDNSequence, SignatureAlgorithm}
-  alias X509.Certificate.{Template, Validity}
+  alias X509.Certificate.Template
 
   @hash :sha256
   @curve :secp256r1
@@ -27,16 +27,25 @@ defmodule ATECC508A.Certificate do
   * `signer` - the signer's certificate
   * `signer_key` - the signer's private key
   """
-  @spec new(
+  @spec new_device(
           :public_key.ec_public_key(),
-          pos_integer(),
-          binary() | {:rdnSequence, any()},
+          ATECC508A.serial_number(),
+          String.t(),
           X509.Certificate.t(),
           :public_key.ec_private_key()
         ) :: X509.Certificate.t()
-  def new(public_key, serial, subject_rdn, signer, signer_key) do
-    template = template(serial)
-    X509.Certificate.new(public_key, subject_rdn, signer, signer_key, template: template)
+  def new_device(atecc508a_public_key, atecc508a_sn, manufacturer_sn, signer, signer_key) do
+    byte_size(manufacturer_sn) <= 16 || raise "Manufacturer serial number too long"
+    subject_rdn = "/CN=" <> manufacturer_sn
+
+    {not_before_dt, not_after_dt} = ATECC508A.Validity.create_compatible_validity(@validity_years)
+    compressed_validity = ATECC508A.Validity.compress(not_before_dt, not_after_dt)
+    x509_validity = X509.Certificate.Validity.new(not_before_dt, not_after_dt)
+
+    x509_cert_sn = ATECC508A.SerialNumber.from_device_sn(atecc508a_sn, compressed_validity)
+    template = template(x509_cert_sn, x509_validity)
+
+    X509.Certificate.new(atecc508a_public_key, subject_rdn, signer, signer_key, template: template)
   end
 
   @spec curve() :: :secp256r1
@@ -84,12 +93,15 @@ defmodule ATECC508A.Certificate do
       format_version::size(4), reserved>>
   end
 
+  @doc """
+  Decompress an ECC508A certificate back to it's X.509 form.
+  """
   @spec decompress(
           ATECC508A.compressed_cert(),
           :public_key.ec_public_key(),
           String.t() | X509.RDNSequence.t(),
           (any() -> any()),
-          (any() -> any())
+          (any() -> :public_key.ec_public_key())
         ) :: X509.Certificate.t()
   def decompress(compressed_cert, public_key, subject_rdn, serial_fun, signer_fun) do
     <<
@@ -103,13 +115,8 @@ defmodule ATECC508A.Certificate do
       _reserved::size(8)
     >> = compressed_cert
 
-    serial_number = serial_fun.(serial_number_source)
+    x509_serial_number = serial_fun.(serial_number_source)
     signer = signer_fun.(signer_id)
-
-    template =
-      template(serial_number)
-      |> Template.update_ski(public_key)
-      |> Template.update_aki(signer)
 
     signer_rdn =
       case signer do
@@ -123,12 +130,14 @@ defmodule ATECC508A.Certificate do
           otp_tbs_certificate(tbs, :subject)
       end
 
+    signer_public_key = X509.Certificate.public_key(signer)
+
     signature_alg = SignatureAlgorithm.new(@hash, :ecdsa)
 
     otp_tbs_certificate =
       otp_tbs_certificate(
         version: @version,
-        serialNumber: serial_number,
+        serialNumber: x509_serial_number,
         signature: signature_alg,
         issuer:
           case signer_rdn do
@@ -142,10 +151,12 @@ defmodule ATECC508A.Certificate do
             name when is_binary(name) -> RDNSequence.new(name, :otp)
           end,
         subjectPublicKeyInfo: PublicKey.wrap(public_key, :OTPSubjectPublicKeyInfo),
-        extensions:
-          template.extensions
-          |> Keyword.values()
-          |> Enum.reject(&(&1 == false))
+        extensions: [
+          X509.Certificate.Extension.basic_constraints(false),
+          X509.Certificate.Extension.key_usage([:digitalSignature, :keyEncipherment]),
+          X509.Certificate.Extension.ext_key_usage([:clientAuth]),
+          X509.Certificate.Extension.authority_key_identifier(signer_public_key)
+        ]
       )
 
     otp_certificate(
@@ -155,6 +166,9 @@ defmodule ATECC508A.Certificate do
     )
   end
 
+  @doc """
+  Compress an X.509 signature into the raw format expected on the ECC508A
+  """
   @spec compress_signature(binary()) :: <<_::512>>
   def compress_signature(signature) do
     <<0x30, _len, 0x02, r_len, r::signed-unit(8)-size(r_len), 0x02, s_len,
@@ -163,6 +177,9 @@ defmodule ATECC508A.Certificate do
     <<r::unsigned-size(256), s::unsigned-size(256)>>
   end
 
+  @doc """
+  Decompress an ECC508A signature into X.509 form.
+  """
   @spec decompress_signature(<<_::512>>) :: binary()
   def decompress_signature(<<r::binary-size(32), s::binary-size(32)>>) do
     r = unsigned_to_signed_bin(r)
@@ -207,13 +224,15 @@ defmodule ATECC508A.Certificate do
     |> X509.Certificate.Extension.find(:authority_key_identifier)
     |> X509.ASN1.extension()
     |> Keyword.get(:extnValue)
-    |> authority_key_identifier()
+    |> X509.ASN1.authority_key_identifier()
     |> Keyword.get(:keyIdentifier)
   end
 
   # Helpers
 
-  defp unsigned_to_signed_bin(<<1::size(1), _::size(7), _::binary>> = bin), do: <<0x00, bin::binary>>
+  defp unsigned_to_signed_bin(<<1::size(1), _::size(7), _::binary>> = bin),
+    do: <<0x00, bin::binary>>
+
   defp unsigned_to_signed_bin(bin), do: bin
 
   defp serial_number_source(:random), do: 0x00
@@ -230,10 +249,10 @@ defmodule ATECC508A.Certificate do
     """
   end
 
-  defp template(serial) do
+  defp template(serial, validity) do
     %Template{
       serial: serial,
-      validity: years(@validity_years),
+      validity: validity,
       hash: @hash,
       extensions: [
         basic_constraints: X509.Certificate.Extension.basic_constraints(false),
@@ -244,23 +263,6 @@ defmodule ATECC508A.Certificate do
       ]
     }
     |> Template.new()
-  end
-
-  defp years(years) do
-    now =
-      DateTime.utc_now()
-      |> trim()
-
-    not_before = now
-    not_after = Map.put(now, :year, now.year + years)
-    Validity.new(not_before, not_after)
-  end
-
-  defp trim(datetime) do
-    datetime
-    |> Map.put(:minute, 0)
-    |> Map.put(:second, 0)
-    |> Map.put(:microsecond, {0, 0})
   end
 
   defp decode_generalized_time(timestamp) do

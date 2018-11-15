@@ -10,10 +10,6 @@ defmodule ATECC508A.Device do
   @atecc508a_wake_delay_us 1500
   @atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
 
-  @atecc508a_zone_config 0
-  @atecc508a_zone_otp 1
-  @atecc508a_zone_data 2
-
   @type provisioning_state :: :unconfigured | :configured | :provisioned | :errored
 
   defmodule State do
@@ -117,7 +113,12 @@ defmodule ATECC508A.Device do
   end
 
   def handle_call(:read_info, _from, state) do
-    rc = %ATECC508A.Info{}
+    wakeup(state)
+
+    # rc = %ATECC508A.Info{}
+    rc = read_zone(state, :config, 0, 0, 0, 32)
+
+    sleep(state)
     {:reply, rc, state}
   end
 
@@ -165,5 +166,37 @@ defmodule ATECC508A.Device do
   defp microsleep(usec) do
     msec = round(:math.ceil(usec / 1000))
     Process.sleep(msec)
+  end
+
+  defp get_addr(:config, 0, block, offset), do: block * 8 + offset
+  defp get_addr(:otp, 0, block, offset), do: block * 8 + offset
+  defp get_addr(:data, slot, block, offset), do: block * 256 + slot * 8 + offset
+
+  defp length_flag(4), do: 0
+  defp length_flag(32), do: 1
+
+  defp zone_value(:config), do: 0
+  defp zone_value(:otp), do: 1
+  defp zone_value(:data), do: 02
+
+  defp read_zone(state, zone, slot, block, offset, len) when len == 4 or len == 32 do
+    addr = get_addr(zone, slot, block, offset)
+
+    msg = <<7, 0x02, length_flag(len)::1, zone_value(zone)::7, addr::little-16>>
+    crc = ATECC508A.CRC.crc(msg)
+    to_send = [3, msg, crc]
+    response_len = len + 3
+
+    with :ok <- I2C.write(state.i2c, state.address, to_send),
+         microsleep(5000),
+         {:ok, <<^response_len, message::binary-size(len), message_crc::binary-size(2)>>} <-
+           I2C.read(state.i2c, state.address, len + 3),
+         ^message_crc <- ATECC508A.CRC.crc(<<response_len, message::binary>>) do
+      message
+    else
+      {:error, _} = error -> error
+      {:ok, bin} when is_binary(bin) -> {:error, {:unexpected_length, bin, response_len}}
+      _bad_crc -> {:error, :crc_mismatch}
+    end
   end
 end

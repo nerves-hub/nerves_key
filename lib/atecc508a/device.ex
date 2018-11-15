@@ -3,8 +3,6 @@ defmodule ATECC508A.Device do
 
   alias Circuits.I2C
 
-  # @default_unprovisioned_address 0x60
-  # 0x58
   @default_provisioned_address 0x60
 
   @atecc508a_wake_delay_us 1500
@@ -113,13 +111,14 @@ defmodule ATECC508A.Device do
   end
 
   def handle_call(:read_info, _from, state) do
-    wakeup(state)
-
-    # rc = %ATECC508A.Info{}
-    rc = read_zone(state, :config, 0, 0, 0, 32)
-
-    sleep(state)
-    {:reply, rc, state}
+    with :ok <- wakeup(state),
+         {:ok, raw_bytes} <- read_configuration_zone(state),
+         {:ok, rc} <- parse_config_zone(raw_bytes),
+         :ok <- sleep(state) do
+      {:reply, rc, state}
+    else
+      error -> {:reply, error, state}
+    end
   end
 
   def handle_call(:configure, _from, state) do
@@ -138,7 +137,7 @@ defmodule ATECC508A.Device do
   end
 
   defp device_configured?(i2c) do
-    # I2C.write_read(i2c, @unprovisioned_address)
+    # I2C.write_read(i2c, @provisioned_address)
   end
 
   defp wakeup(state) do
@@ -154,8 +153,11 @@ defmodule ATECC508A.Device do
     microsleep(@atecc508a_wake_delay_us)
 
     # Check that it's awake by reading its signature
-
-    {:ok, @atecc508a_signature} = I2C.read(state.i2c, state.address, 4)
+    case I2C.read(state.i2c, state.address, 4) do
+      {:ok, @atecc508a_signature} -> :ok
+      {:ok, _something_else} -> {:error, :unexpected_wakeup_response}
+      error -> error
+    end
   end
 
   defp sleep(state) do
@@ -169,15 +171,15 @@ defmodule ATECC508A.Device do
   end
 
   defp get_addr(:config, 0, block, offset), do: block * 8 + offset
-  defp get_addr(:otp, 0, block, offset), do: block * 8 + offset
-  defp get_addr(:data, slot, block, offset), do: block * 256 + slot * 8 + offset
+  # defp get_addr(:otp, 0, block, offset), do: block * 8 + offset
+  # defp get_addr(:data, slot, block, offset), do: block * 256 + slot * 8 + offset
 
-  defp length_flag(4), do: 0
+  # defp length_flag(4), do: 0
   defp length_flag(32), do: 1
 
   defp zone_value(:config), do: 0
-  defp zone_value(:otp), do: 1
-  defp zone_value(:data), do: 02
+  # defp zone_value(:otp), do: 1
+  # defp zone_value(:data), do: 02
 
   defp read_zone(state, zone, slot, block, offset, len) when len == 4 or len == 32 do
     addr = get_addr(zone, slot, block, offset)
@@ -192,11 +194,49 @@ defmodule ATECC508A.Device do
          {:ok, <<^response_len, message::binary-size(len), message_crc::binary-size(2)>>} <-
            I2C.read(state.i2c, state.address, len + 3),
          ^message_crc <- ATECC508A.CRC.crc(<<response_len, message::binary>>) do
-      message
+      {:ok, message}
     else
       {:error, _} = error -> error
       {:ok, bin} when is_binary(bin) -> {:error, {:unexpected_length, bin, response_len}}
       _bad_crc -> {:error, :crc_mismatch}
     end
   end
+
+  defp read_configuration_zone(state) do
+    with {:ok, lo} <- read_zone(state, :config, 0, 0, 0, 32),
+         {:ok, mid} <- read_zone(state, :config, 0, 1, 0, 32),
+         {:ok, hi} <- read_zone(state, :config, 0, 2, 0, 32),
+         {:ok, hi2} <- read_zone(state, :config, 0, 3, 0, 32) do
+      {:ok, lo <> mid <> hi <> hi2}
+    end
+  end
+
+  defp parse_config_zone(
+         <<sn0_3::4-bytes, rev_num::4-bytes, sn4_8::5-bytes, _reserved0, _i2c_enable, _reserved1,
+           _i2c_address, _reserved2, otp_mode, chip_mode, slot_config::32-bytes,
+           counter0::little-64, counter1::little-64, last_key_use::16-bytes, user_extra, selector,
+           lock_value, lock_config, slot_locked::little-16, _rfu::2-bytes, x509_format::4-bytes,
+           key_config::32-bytes>>
+       ) do
+    {:ok,
+     %{
+       serial_number: sn0_3 <> sn4_8,
+       rev_num: rev_num,
+       otp_mode: otp_mode,
+       chip_mode: chip_mode,
+       slot_config: slot_config,
+       counter0: counter0,
+       counter1: counter1,
+       last_key_use: last_key_use,
+       user_extra: user_extra,
+       selector: selector,
+       lock_value: lock_value,
+       lock_config: lock_config,
+       slot_locked: slot_locked,
+       x509_format: x509_format,
+       key_config: key_config
+     }}
+  end
+
+  defp parse_config_zone(_other), do: {:error, :config_parse_error}
 end

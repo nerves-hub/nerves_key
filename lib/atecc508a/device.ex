@@ -8,7 +8,8 @@ defmodule ATECC508A.Device do
 
   @otp_magic <<0x4E, 0x72, 0x76, 0x73>>
 
-  @atecc508a_wake_delay_us 1500
+  # 1.5 ms in the datasheet
+  @atecc508a_wake_delay_ms 2
   @atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
 
   @type provisioning_state :: :unconfigured | :configured | :provisioned | :errored
@@ -153,7 +154,7 @@ defmodule ATECC508A.Device do
     I2C.write(state.i2c, 0, <<0>>)
 
     # Wait for the device to wake up for real
-    microsleep(@atecc508a_wake_delay_us)
+    Process.sleep(@atecc508a_wake_delay_ms)
 
     # Check that it's awake by reading its signature
     case I2C.read(state.i2c, state.address, 4) do
@@ -168,11 +169,6 @@ defmodule ATECC508A.Device do
     I2C.write(state.i2c, state.address, <<0x01>>)
   end
 
-  defp microsleep(usec) do
-    msec = round(:math.ceil(usec / 1000))
-    Process.sleep(msec)
-  end
-
   defp get_addr(:config, 0, block, offset), do: block * 8 + offset
   defp get_addr(:otp, 0, block, offset), do: block * 8 + offset
   # defp get_addr(:data, slot, block, offset), do: block * 256 + slot * 8 + offset
@@ -183,7 +179,6 @@ defmodule ATECC508A.Device do
   defp zone_value(:config), do: 0
   defp zone_value(:otp), do: 1
   # defp zone_value(:data), do: 02
-
   @atecc508a_op_read 0x02
   @atecc508a_op_write 0x12
   @atecc508a_op_genkey 0x40
@@ -198,7 +193,7 @@ defmodule ATECC508A.Device do
     response_len = len + 3
 
     with :ok <- I2C.write(state.i2c, state.address, to_send),
-         microsleep(5000),
+         Process.sleep(5),
          {:ok, <<^response_len, message::binary-size(len), message_crc::binary-size(2)>>} <-
            I2C.read(state.i2c, state.address, len + 3),
          ^message_crc <- ATECC508A.CRC.crc(<<response_len, message::binary>>) do
@@ -223,7 +218,7 @@ defmodule ATECC508A.Device do
     to_send = [3, msg, crc]
 
     with :ok <- I2C.write(state.i2c, state.address, to_send),
-         microsleep(5000),
+         Process.sleep(5),
          {:ok, <<3, 0, message_crc::binary-size(2)>>} <- I2C.read(state.i2c, state.address, 4),
          ^message_crc <- ATECC508A.CRC.crc(<<3, 0>>) do
       :ok
@@ -248,7 +243,7 @@ defmodule ATECC508A.Device do
     to_send = [3, msg, msg_crc]
 
     with :ok <- I2C.write(state.i2c, state.address, to_send),
-         microsleep(5000),
+         Process.sleep(5),
          {:ok, <<3, 0, message_crc::binary-size(2)>>} <- I2C.read(state.i2c, state.address, 4),
          ^message_crc <- ATECC508A.CRC.crc(<<3, 0>>) do
       :ok

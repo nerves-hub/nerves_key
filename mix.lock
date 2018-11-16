@@ -1,7 +1,7 @@
 %{
-  "circuits_i2c": {:hex, :circuits_i2c, "0.1.0", "852e53ce11322222fdaa6c1d36237038b56f8fc41fc9fbcaa09c40fe561386ca", [:make, :mix], [{:elixir_make, "~> 0.4", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm"},
+  "circuits_i2c": {:git, "https://github.com/elixir-circuits/circuits_i2c.git", "f142a001618997ce563b5281fef98d294e738f01", []},
   "dialyxir": {:hex, :dialyxir, "1.0.0-rc.4", "71b42f5ee1b7628f3e3a6565f4617dfb02d127a0499ab3e72750455e986df001", [:mix], [{:erlex, "~> 0.1", [hex: :erlex, repo: "hexpm", optional: false]}], "hexpm"},
-  "earmark": {:hex, :earmark, "1.2.6", "b6da42b3831458d3ecc57314dff3051b080b9b2be88c2e5aa41cd642a5b044ed", [:mix], [], "hexpm"},
+  "earmark": {:hex, :earmark, "1.3.0", "17f0c38eaafb4800f746b457313af4b2442a8c2405b49c645768680f900be603", [:mix], [], "hexpm"},
   "elixir_circuits_i2c": {:git, "https://github.com/elixir-circuits/i2c.git", "60b45c6959f302b688558cb083f3f27aed4e082e", []},
   "elixir_make": {:hex, :elixir_make, "0.4.2", "332c649d08c18bc1ecc73b1befc68c647136de4f340b548844efc796405743bf", [:mix], [], "hexpm"},
   "erlex": {:hex, :erlex, "0.1.6", "c01c889363168d3fdd23f4211647d8a34c0f9a21ec726762312e08e083f3d47e", [:mix], [], "hexpm"},

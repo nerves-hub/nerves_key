@@ -2,8 +2,11 @@ defmodule ATECC508A.Device do
   use GenServer
 
   alias Circuits.I2C
+  alias ATECC508A.Util
 
   @default_provisioned_address 0x60
+
+  @otp_magic <<0x4E, 0x72, 0x76, 0x73>>
 
   @atecc508a_wake_delay_us 1500
   @atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
@@ -171,20 +174,23 @@ defmodule ATECC508A.Device do
   end
 
   defp get_addr(:config, 0, block, offset), do: block * 8 + offset
-  # defp get_addr(:otp, 0, block, offset), do: block * 8 + offset
+  defp get_addr(:otp, 0, block, offset), do: block * 8 + offset
   # defp get_addr(:data, slot, block, offset), do: block * 256 + slot * 8 + offset
 
   # defp length_flag(4), do: 0
   defp length_flag(32), do: 1
 
   defp zone_value(:config), do: 0
-  # defp zone_value(:otp), do: 1
+  defp zone_value(:otp), do: 1
   # defp zone_value(:data), do: 02
+
+  @atecc508a_op_read 0x02
+  @atecc508a_op_write 0x12
 
   defp read_zone(state, zone, slot, block, offset, len) when len == 4 or len == 32 do
     addr = get_addr(zone, slot, block, offset)
 
-    msg = <<7, 0x02, length_flag(len)::1, zone_value(zone)::7, addr::little-16>>
+    msg = <<7, @atecc508a_op_read, length_flag(len)::1, zone_value(zone)::7, addr::little-16>>
     crc = ATECC508A.CRC.crc(msg)
     to_send = [3, msg, crc]
     response_len = len + 3
@@ -200,6 +206,41 @@ defmodule ATECC508A.Device do
       {:ok, bin} when is_binary(bin) -> {:error, {:unexpected_length, bin, response_len}}
       _bad_crc -> {:error, :crc_mismatch}
     end
+  end
+
+  defp write_zone(state, zone, slot, block, offset, data)
+       when byte_size(data) == 4 or byte_size(data) == 32 do
+    addr = get_addr(zone, slot, block, offset)
+    len = byte_size(data)
+
+    msg =
+      <<len + 7, @atecc508a_op_write, length_flag(len)::1, 0::5, zone_value(zone)::2,
+        addr::little-16, data>>
+
+    crc = ATECC508A.CRC.crc(msg)
+    to_send = [3, msg, crc]
+
+    with :ok <- I2C.write(state.i2c, state.address, to_send),
+         microsleep(5000),
+         {:ok, <<3, 0, message_crc::binary-size(2)>>} <-
+           I2C.read(state.i2c, state.address, len + 3),
+         ^message_crc <- ATECC508A.CRC.crc(<<3, 0>>) do
+      :ok
+    else
+      {:error, _} = error -> error
+      {:ok, bin} when is_binary(bin) -> {:error, {:failed, bin}}
+      _bad_crc -> {:error, :crc_mismatch}
+    end
+  end
+
+  defp read_otp_zone(state) do
+    with {:ok, lo} <- read_zone(state, :otp, 0, 0, 0, 32),
+         {:ok, hi} <- read_zone(state, :otp, 0, 1, 0, 32) do
+      {:ok, lo <> hi}
+    end
+  end
+
+  defp write_otp_zone(state, contents) do
   end
 
   defp read_configuration_zone(state) do
@@ -239,4 +280,24 @@ defmodule ATECC508A.Device do
   end
 
   defp parse_config_zone(_other), do: {:error, :config_parse_error}
+
+  defp parse_otp_zone(
+         <<@otp_magic, flags::2-bytes, board_name::10-bytes, mfg_serial_number::16-bytes,
+           user_data::32-bytes>>
+       ) do
+    {:ok,
+     %{
+       flags: flags,
+       board_name: Util.trim_zeros(board_name),
+       mfg_serial_number: Util.trim_zeros(mfg_serial_number),
+       user_data: user_data
+     }}
+  end
+
+  defp encode_otp_zone(info) do
+    board_name = Util.pad_zeros(info.board_name, 10)
+    mfg_serial_number = Util.pad_zeros(info.mfg_serial_number, 16)
+
+    [<<@otp_magic, 0::16>>, board_name, mfg_serial_number, info.user_data]
+  end
 end

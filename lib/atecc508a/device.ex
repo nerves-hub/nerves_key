@@ -186,6 +186,8 @@ defmodule ATECC508A.Device do
 
   @atecc508a_op_read 0x02
   @atecc508a_op_write 0x12
+  @atecc508a_op_genkey 0x40
+  @atecc508a_op_lock 0x17
 
   defp read_zone(state, zone, slot, block, offset, len) when len == 4 or len == 32 do
     addr = get_addr(zone, slot, block, offset)
@@ -222,8 +224,32 @@ defmodule ATECC508A.Device do
 
     with :ok <- I2C.write(state.i2c, state.address, to_send),
          microsleep(5000),
-         {:ok, <<3, 0, message_crc::binary-size(2)>>} <-
-           I2C.read(state.i2c, state.address, len + 3),
+         {:ok, <<3, 0, message_crc::binary-size(2)>>} <- I2C.read(state.i2c, state.address, 4),
+         ^message_crc <- ATECC508A.CRC.crc(<<3, 0>>) do
+      :ok
+    else
+      {:error, _} = error -> error
+      {:ok, bin} when is_binary(bin) -> {:error, {:failed, bin}}
+      _bad_crc -> {:error, :crc_mismatch}
+    end
+  end
+
+  defp genkey(state, mode, key_id) do
+  end
+
+  defp lock_zone(state, zone, crc) do
+    # Need to calculate the CRC of everything written in the zone to be
+    # locked for this to work.
+
+    # See Table 9-31 - Mode Encoding
+    mode = if zone == :config, do: 0, else: 1
+    msg = <<7, @atecc508a_op_lock, mode, crc>>
+    msg_crc = ATECC508A.CRC.crc(msg)
+    to_send = [3, msg, msg_crc]
+
+    with :ok <- I2C.write(state.i2c, state.address, to_send),
+         microsleep(5000),
+         {:ok, <<3, 0, message_crc::binary-size(2)>>} <- I2C.read(state.i2c, state.address, 4),
          ^message_crc <- ATECC508A.CRC.crc(<<3, 0>>) do
       :ok
     else

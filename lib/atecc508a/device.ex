@@ -1,7 +1,7 @@
 defmodule ATECC508A.Device do
   use GenServer
 
-  alias ATECC508A.{Transport, Request, Util}
+  alias ATECC508A.{Configuration, Transport, Request, Util}
 
   @otp_magic <<0x4E, 0x72, 0x76, 0x73>>
 
@@ -105,7 +105,7 @@ defmodule ATECC508A.Device do
   end
 
   def handle_call(:read_info, _from, state) do
-    with {:ok, raw_bytes} <- read_configuration_zone(state),
+    with {:ok, raw_bytes} <- Configuration.read_configuration_zone(state),
          {:ok, rc} <- parse_config_zone(raw_bytes) do
       {:reply, rc, state}
     else
@@ -140,15 +140,6 @@ defmodule ATECC508A.Device do
   end
 
   defp write_otp_zone(state, contents) do
-  end
-
-  defp read_configuration_zone(state) do
-    with {:ok, lo} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 0, 0, 32),
-         {:ok, mid} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 1, 0, 32),
-         {:ok, hi} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 2, 0, 32),
-         {:ok, hi2} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 3, 0, 32) do
-      {:ok, lo <> mid <> hi <> hi2}
-    end
   end
 
   defp parse_config_zone(

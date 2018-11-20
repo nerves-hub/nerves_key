@@ -4,6 +4,8 @@ defmodule ATECC508A.RequestTest do
 
   alias ATECC508A.Request
 
+  @mock_transport {ATECC508A.Transport.Mock, nil}
+
   @test_data_32 <<1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
                   23, 24, 25, 26, 27, 28, 29, 30, 31, 32>>
   @test_data_4 <<1, 2, 3, 4>>
@@ -14,25 +16,24 @@ defmodule ATECC508A.RequestTest do
     ATECC508A.Transport.Mock
     |> expect(:request, fn _, <<2, 128, 0, 0>>, 5, 32 -> {:ok, @test_data_32} end)
 
-    assert Request.read_zone(ATECC508A.Transport.Mock, nil, :config, 0, 0, 0, 32) ==
-             {:ok, @test_data_32}
+    assert Request.read_zone(@mock_transport, :config, 0, 32) == {:ok, @test_data_32}
 
     ATECC508A.Transport.Mock
     |> expect(:request, fn _, <<2, 128, 8, 0>>, 5, 32 -> {:ok, @test_data_32} end)
 
-    assert Request.read_zone(ATECC508A.Transport.Mock, nil, :config, 0, 1, 0, 32) ==
-             {:ok, @test_data_32}
+    assert Request.read_zone(@mock_transport, :config, 8, 32) == {:ok, @test_data_32}
   end
 
   test "read otp zone" do
     ATECC508A.Transport.Mock
     |> expect(:request, fn _, <<2, 129, 0, 0>>, 5, 32 -> {:ok, @test_data_32} end)
 
-    assert Request.read_zone(ATECC508A.Transport.Mock, nil, :otp, 0, 0, 0, 32) == {:ok, @test_data_32}
+    assert Request.read_zone(@mock_transport, :otp, 0, 32) == {:ok, @test_data_32}
 
     ATECC508A.Transport.Mock
     |> expect(:request, fn _, <<2, 129, 8, 0>>, 5, 32 -> {:ok, @test_data_32} end)
-    assert Request.read_zone(ATECC508A.Transport.Mock, nil,:otp, 0, 1, 0, 32) == {:ok, @test_data_32}
+
+    assert Request.read_zone(@mock_transport, :otp, 8, 32) == {:ok, @test_data_32}
   end
 
   # test "read data zone" do

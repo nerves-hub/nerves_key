@@ -1,5 +1,7 @@
 defmodule ATECC508A.Transport.I2C do
-  @behaviour ATECC508A.Transport
+  alias ATECC508A.Transport
+
+  @behaviour Transport
 
   # 1.5 ms in the datasheet
   @atecc508a_wake_delay_ms 2
@@ -9,20 +11,21 @@ defmodule ATECC508A.Transport.I2C do
 
   @type instance :: {Circuits.I2C.i2c_bus(), Circuits.I2C.i2c_address()}
 
-  @impl ATECC508A.Transport
-  @spec init(keyword()) :: {:ok, instance()}
+  @impl Transport
+  @spec init(keyword()) :: {:ok, Transport.t()} | {:error, atom()}
   def init(args) do
     bus_name = Keyword.get(args, :bus_name, "i2c-1")
     address = Keyword.get(args, :address, @default_atecc508a_address)
 
     case Circuits.I2C.open(bus_name) do
-      {:ok, i2c} -> {:ok, {i2c, address}}
+      {:ok, i2c} -> {:ok, {__MODULE__, {i2c, address}}}
       error -> error
     end
   end
 
-  @impl ATECC508A.Transport
-  @spec request(instance(), binary(), any(), number()) :: {:error, atom()} | {:ok, binary()}
+  @impl Transport
+  @spec request(instance(), binary(), non_neg_integer(), non_neg_integer()) ::
+          {:error, atom()} | {:ok, binary()}
   def request({i2c, address}, payload, timeout, response_payload_len) do
     to_send = package(payload)
     response_len = response_payload_len + 3

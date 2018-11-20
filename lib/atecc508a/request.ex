@@ -1,8 +1,9 @@
 defmodule ATECC508A.Request do
   @moduledoc """
-  This module knows how to encode the various messages that get sent to
-  the ATECC508A.
+  This module knows how to send requests to the ATECC508A.
   """
+
+  alias ATECC508A.Transport
 
   @type zone :: :config | :otp | :data
   @type slot :: 0..15
@@ -10,6 +11,7 @@ defmodule ATECC508A.Request do
   @type offset :: 0..7
   @type access_size :: 4 | 32
   @type access_data :: <<_::32>> | <<_::1024>>
+  @type addr :: 0..65535
 
   @typedoc """
   A transaction is a tuple with the binary to send, how long to
@@ -23,49 +25,72 @@ defmodule ATECC508A.Request do
   @atecc508a_op_genkey 0x40
   @atecc508a_op_lock 0x17
 
-  def interpret_result({:ok, data}) when byte_size(data) > 1 do
-    {:ok, data}
+  # See https://github.com/MicrochipTech/cryptoauthlib/blob/master/lib/atca_execution.c
+  # for command max execution times. I'm not sure why they are different from the
+  # datasheet. Since this library is compatible with the ECC608A, the longer time is
+  # used.
+
+  @spec to_config_addr(0..127) :: addr()
+  def to_config_addr(byte_offset)
+      when byte_offset >= 0 and byte_offset < 128 and rem(byte_offset, 4) == 0 do
+    div(byte_offset, 4)
   end
 
-  def interpret_result({:error, reason}), do: {:error, reason}
-  def interpret_result({:ok, <<0x00>>}), do: :ok
-  def interpret_result({:ok, <<0x01>>}), do: {:error, :checkmac_or_verify_miscompare}
-  def interpret_result({:ok, <<0x03>>}), do: {:error, :parse_error}
-  def interpret_result({:ok, <<0x05>>}), do: {:error, :ecc_fault}
-  def interpret_result({:ok, <<0x0F>>}), do: {:error, :execution_error}
-  def interpret_result({:ok, <<0x11>>}), do: {:error, :no_wake}
-  def interpret_result({:ok, <<0xEE>>}), do: {:error, :watchdog_about_to_expire}
-  def interpret_result({:ok, <<0xFF>>}), do: {:error, :crc_error}
-  def interpret_result({:ok, <<unknown>>}), do: {:error, {:unexpected_status, unknown}}
+  @spec to_config_addr(block(), offset()) :: addr()
+  def to_config_addr(block, offset)
+      when block >= 0 and block < 4 and offset >= 0 and offset < 8 do
+    block * 8 + offset
+  end
+
+  @spec to_otp_addr(0..127) :: addr()
+  def to_otp_addr(byte_offset), do: to_config_addr(byte_offset)
+
+  @spec to_otp_addr(block(), offset()) :: addr()
+  def to_otp_addr(block, offset), do: to_config_addr(block, offset)
+
+  @spec to_data_addr(slot(), 0..416) :: addr()
+  def to_data_addr(slot, byte_offset)
+      when slot >= 0 and slot < 16 and byte_offset >= 0 and byte_offset < 128 and
+             rem(byte_offset, 4) == 0 do
+    word_offset = div(byte_offset, 4)
+    offset = rem(word_offset, 8)
+    block = div(word_offset, 8)
+    to_data_addr(slot, block, offset)
+  end
+
+  @spec to_data_addr(slot(), block(), offset()) :: addr()
+  def to_data_addr(slot, block, offset)
+      when slot >= 0 and slot < 16 and block >= 0 and block < 13 and offset >= 0 and offset < 8 do
+    block * 256 + slot * 8 + offset
+  end
 
   @doc """
   Create a read message
   """
-  # @spec read_zone(f(), zone(), slot(), block(), offset(), access_size()) :: {:ok, binary()} | {:error, atom()}
-  def read_zone(transport, id, zone, slot, block, offset, length) do
-    addr = get_addr(zone, slot, block, offset)
-
+  @spec read_zone(Transport.t(), zone(), addr(), access_size()) ::
+          {:ok, binary()} | {:error, atom()}
+  def read_zone(transport, zone, addr, length) do
     payload =
-      <<@atecc508a_op_read, length_flag(length)::1, 0::5, zone_index(zone)::2, addr::binary>>
+      <<@atecc508a_op_read, length_flag(length)::1, 0::5, zone_index(zone)::2, addr::little-16>>
 
-    transport.request(id, payload, 5, length)
+    Transport.request(transport, payload, 5, length)
     |> interpret_result()
   end
 
   @doc """
   Create a write message
   """
-  # @spec write_zone(zone(), slot(), block(), offset(), access_data()) :: transaction()
-  def write_zone(transport, id, zone, slot, block, offset, data) do
-    addr = get_addr(zone, slot, block, offset)
+  @spec write_zone(Transport.t(), zone(), addr(), access_data()) :: :ok | {:error, atom()}
+  def write_zone(transport, zone, addr, data) do
     len = byte_size(data)
 
     payload =
-      <<@atecc508a_op_write, length_flag(len)::1, 0::5, zone_index(zone)::2, addr::binary,
+      <<@atecc508a_op_write, length_flag(len)::1, 0::5, zone_index(zone)::2, addr::little-16,
         data::binary>>
 
-    transport.request(id, payload, 5, 1)
+    Transport.request(transport, payload, 45, 1)
     |> interpret_result()
+    |> return_status()
   end
 
   @doc """
@@ -79,7 +104,7 @@ defmodule ATECC508A.Request do
 
     payload = <<@atecc508a_op_genkey, 0::3, mode4::1, mode3::1, mode2::1, 0::2, key_id>>
 
-    transport.request(id, payload, 115, 64)
+    transport.request(id, payload, 653, 64)
     |> interpret_result()
   end
 
@@ -95,7 +120,7 @@ defmodule ATECC508A.Request do
     mode = if zone == :config, do: 0, else: 1
     payload = <<@atecc508a_op_lock, mode, zone_crc::binary>>
 
-    transport.request(id, payload, 32, 1)
+    transport.request(id, payload, 35, 1)
     |> interpret_result()
   end
 
@@ -103,14 +128,24 @@ defmodule ATECC508A.Request do
   defp zone_index(:otp), do: 1
   defp zone_index(:data), do: 2
 
-  defp get_addr(zone, _slot, block, offset) when zone in [:config, :otp] do
-    <<block::5, offset::3, 0>>
-  end
-
-  defp get_addr(:data, slot, block, offset) do
-    <<slot::5, offset::3, block>>
-  end
-
   defp length_flag(32), do: 1
   defp length_flag(4), do: 0
+
+  defp interpret_result({:ok, data}) when byte_size(data) > 1 do
+    {:ok, data}
+  end
+
+  defp interpret_result({:error, reason}), do: {:error, reason}
+  defp interpret_result({:ok, <<0x00>>}), do: {:ok, <<0x00>>}
+  defp interpret_result({:ok, <<0x01>>}), do: {:error, :checkmac_or_verify_miscompare}
+  defp interpret_result({:ok, <<0x03>>}), do: {:error, :parse_error}
+  defp interpret_result({:ok, <<0x05>>}), do: {:error, :ecc_fault}
+  defp interpret_result({:ok, <<0x0F>>}), do: {:error, :execution_error}
+  defp interpret_result({:ok, <<0x11>>}), do: {:error, :no_wake}
+  defp interpret_result({:ok, <<0xEE>>}), do: {:error, :watchdog_about_to_expire}
+  defp interpret_result({:ok, <<0xFF>>}), do: {:error, :crc_error}
+  defp interpret_result({:ok, <<unknown>>}), do: {:error, {:unexpected_status, unknown}}
+
+  defp return_status({:ok, _}), do: :ok
+  defp return_status(other), do: other
 end

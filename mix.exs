@@ -47,7 +47,8 @@ defmodule Atecc508a.MixProject do
       {:x509, github: "voltone/x509", branch: "master"},
       {:circuits_i2c, github: "elixir-circuits/circuits_i2c"},
       {:ex_doc, "~> 0.11", only: :dev, runtime: false},
-      {:dialyxir, "1.0.0-rc.4", only: :dev, runtime: false}
+      {:dialyxir, "1.0.0-rc.4", only: :dev, runtime: false},
+      {:mox, "~> 0.4", only: :test}
     ]
   end
 end

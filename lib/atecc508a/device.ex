@@ -1,16 +1,9 @@
 defmodule ATECC508A.Device do
   use GenServer
 
-  alias Circuits.I2C
-  alias ATECC508A.Util
-
-  @default_provisioned_address 0x60
+  alias ATECC508A.{Transport, Request, Util}
 
   @otp_magic <<0x4E, 0x72, 0x76, 0x73>>
-
-  # 1.5 ms in the datasheet
-  @atecc508a_wake_delay_ms 2
-  @atecc508a_signature <<0x04, 0x11, 0x33, 0x43>>
 
   @type provisioning_state :: :unconfigured | :configured | :provisioned | :errored
 
@@ -102,12 +95,9 @@ defmodule ATECC508A.Device do
   end
 
   def init(_args) do
-    device = Application.get_env(:atecc508a, :i2c_device, "i2c-1")
-    address = Application.get_env(:atecc508a, :i2c_address, @default_provisioned_address)
+    {:ok, i2c} = Transport.I2C.init([])
 
-    {:ok, i2c} = I2C.open(device)
-
-    {:ok, %State{i2c: i2c, address: address}, {:continue, :init}}
+    {:ok, %State{i2c: i2c}, {:continue, :init}}
   end
 
   def handle_continue(:init, state) do
@@ -115,10 +105,8 @@ defmodule ATECC508A.Device do
   end
 
   def handle_call(:read_info, _from, state) do
-    with :ok <- wakeup(state),
-         {:ok, raw_bytes} <- read_configuration_zone(state),
-         {:ok, rc} <- parse_config_zone(raw_bytes),
-         :ok <- sleep(state) do
+    with {:ok, raw_bytes} <- read_configuration_zone(state),
+         {:ok, rc} <- parse_config_zone(raw_bytes) do
       {:reply, rc, state}
     else
       error -> {:reply, error, state}
@@ -144,119 +132,9 @@ defmodule ATECC508A.Device do
     # I2C.write_read(i2c, @provisioned_address)
   end
 
-  defp wakeup(state) do
-    # See ATECC508A 6.1 for the wakeup sequence.
-    #
-    # Write to address 0 to pull SDA down for the wakeup interval (60 uS).
-    # Since only 8-bits get through, the I2C speed needs to be < 133 KHz for
-    # this to work. This "fails" since nobody will ACK the write and that's
-    # expected.
-    I2C.write(state.i2c, 0, <<0>>)
-
-    # Wait for the device to wake up for real
-    Process.sleep(@atecc508a_wake_delay_ms)
-
-    # Check that it's awake by reading its signature
-    case I2C.read(state.i2c, state.address, 4) do
-      {:ok, @atecc508a_signature} -> :ok
-      {:ok, _something_else} -> {:error, :unexpected_wakeup_response}
-      error -> error
-    end
-  end
-
-  defp sleep(state) do
-    # See ATECC508A 6.2 for the sleep sequence.
-    I2C.write(state.i2c, state.address, <<0x01>>)
-  end
-
-  defp get_addr(:config, 0, block, offset), do: block * 8 + offset
-  defp get_addr(:otp, 0, block, offset), do: block * 8 + offset
-  # defp get_addr(:data, slot, block, offset), do: block * 256 + slot * 8 + offset
-
-  # defp length_flag(4), do: 0
-  defp length_flag(32), do: 1
-
-  defp zone_value(:config), do: 0
-  defp zone_value(:otp), do: 1
-  # defp zone_value(:data), do: 02
-  @atecc508a_op_read 0x02
-  @atecc508a_op_write 0x12
-  @atecc508a_op_genkey 0x40
-  @atecc508a_op_lock 0x17
-
-  defp read_zone(state, zone, slot, block, offset, len) when len == 4 or len == 32 do
-    addr = get_addr(zone, slot, block, offset)
-
-    msg = <<7, @atecc508a_op_read, length_flag(len)::1, zone_value(zone)::7, addr::little-16>>
-    crc = ATECC508A.CRC.crc(msg)
-    to_send = [3, msg, crc]
-    response_len = len + 3
-
-    with :ok <- I2C.write(state.i2c, state.address, to_send),
-         Process.sleep(5),
-         {:ok, <<^response_len, message::binary-size(len), message_crc::binary-size(2)>>} <-
-           I2C.read(state.i2c, state.address, len + 3),
-         ^message_crc <- ATECC508A.CRC.crc(<<response_len, message::binary>>) do
-      {:ok, message}
-    else
-      {:error, _} = error -> error
-      {:ok, bin} when is_binary(bin) -> {:error, {:unexpected_length, bin, response_len}}
-      _bad_crc -> {:error, :crc_mismatch}
-    end
-  end
-
-  defp write_zone(state, zone, slot, block, offset, data)
-       when byte_size(data) == 4 or byte_size(data) == 32 do
-    addr = get_addr(zone, slot, block, offset)
-    len = byte_size(data)
-
-    msg =
-      <<len + 7, @atecc508a_op_write, length_flag(len)::1, 0::5, zone_value(zone)::2,
-        addr::little-16, data>>
-
-    crc = ATECC508A.CRC.crc(msg)
-    to_send = [3, msg, crc]
-
-    with :ok <- I2C.write(state.i2c, state.address, to_send),
-         Process.sleep(5),
-         {:ok, <<3, 0, message_crc::binary-size(2)>>} <- I2C.read(state.i2c, state.address, 4),
-         ^message_crc <- ATECC508A.CRC.crc(<<3, 0>>) do
-      :ok
-    else
-      {:error, _} = error -> error
-      {:ok, bin} when is_binary(bin) -> {:error, {:failed, bin}}
-      _bad_crc -> {:error, :crc_mismatch}
-    end
-  end
-
-  defp genkey(state, mode, key_id) do
-  end
-
-  defp lock_zone(state, zone, crc) do
-    # Need to calculate the CRC of everything written in the zone to be
-    # locked for this to work.
-
-    # See Table 9-31 - Mode Encoding
-    mode = if zone == :config, do: 0, else: 1
-    msg = <<7, @atecc508a_op_lock, mode, crc>>
-    msg_crc = ATECC508A.CRC.crc(msg)
-    to_send = [3, msg, msg_crc]
-
-    with :ok <- I2C.write(state.i2c, state.address, to_send),
-         Process.sleep(5),
-         {:ok, <<3, 0, message_crc::binary-size(2)>>} <- I2C.read(state.i2c, state.address, 4),
-         ^message_crc <- ATECC508A.CRC.crc(<<3, 0>>) do
-      :ok
-    else
-      {:error, _} = error -> error
-      {:ok, bin} when is_binary(bin) -> {:error, {:failed, bin}}
-      _bad_crc -> {:error, :crc_mismatch}
-    end
-  end
-
   defp read_otp_zone(state) do
-    with {:ok, lo} <- read_zone(state, :otp, 0, 0, 0, 32),
-         {:ok, hi} <- read_zone(state, :otp, 0, 1, 0, 32) do
+    with {:ok, lo} <- Request.read_zone(Transport.I2C, state.i2c, :otp, 0, 0, 0, 32),
+         {:ok, hi} <- Request.read_zone(Transport.I2C, state.i2c, :otp, 0, 1, 0, 32) do
       {:ok, lo <> hi}
     end
   end
@@ -265,10 +143,10 @@ defmodule ATECC508A.Device do
   end
 
   defp read_configuration_zone(state) do
-    with {:ok, lo} <- read_zone(state, :config, 0, 0, 0, 32),
-         {:ok, mid} <- read_zone(state, :config, 0, 1, 0, 32),
-         {:ok, hi} <- read_zone(state, :config, 0, 2, 0, 32),
-         {:ok, hi2} <- read_zone(state, :config, 0, 3, 0, 32) do
+    with {:ok, lo} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 0, 0, 32),
+         {:ok, mid} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 1, 0, 32),
+         {:ok, hi} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 2, 0, 32),
+         {:ok, hi2} <- Request.read_zone(Transport.I2C, state.i2c, :config, 0, 3, 0, 32) do
       {:ok, lo <> mid <> hi <> hi2}
     end
   end

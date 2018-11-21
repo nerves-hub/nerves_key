@@ -105,12 +105,7 @@ defmodule ATECC508A.Device do
   end
 
   def handle_call(:read_info, _from, state) do
-    with {:ok, raw_bytes} <- Configuration.read_configuration_zone(state),
-         {:ok, rc} <- parse_config_zone(raw_bytes) do
-      {:reply, rc, state}
-    else
-      error -> {:reply, error, state}
-    end
+    {:reply, :unimplemented, state}
   end
 
   def handle_call(:configure, _from, state) do
@@ -141,35 +136,6 @@ defmodule ATECC508A.Device do
 
   defp write_otp_zone(state, contents) do
   end
-
-  defp parse_config_zone(
-         <<sn0_3::4-bytes, rev_num::4-bytes, sn4_8::5-bytes, _reserved0, _i2c_enable, _reserved1,
-           _i2c_address, _reserved2, otp_mode, chip_mode, slot_config::32-bytes,
-           counter0::little-64, counter1::little-64, last_key_use::16-bytes, user_extra, selector,
-           lock_value, lock_config, slot_locked::little-16, _rfu::2-bytes, x509_format::4-bytes,
-           key_config::32-bytes>>
-       ) do
-    {:ok,
-     %{
-       serial_number: sn0_3 <> sn4_8,
-       rev_num: rev_num,
-       otp_mode: otp_mode,
-       chip_mode: chip_mode,
-       slot_config: slot_config,
-       counter0: counter0,
-       counter1: counter1,
-       last_key_use: last_key_use,
-       user_extra: user_extra,
-       selector: selector,
-       lock_value: lock_value,
-       lock_config: lock_config,
-       slot_locked: slot_locked,
-       x509_format: x509_format,
-       key_config: key_config
-     }}
-  end
-
-  defp parse_config_zone(_other), do: {:error, :config_parse_error}
 
   defp parse_otp_zone(
          <<@otp_magic, flags::2-bytes, board_name::10-bytes, mfg_serial_number::16-bytes,

@@ -96,23 +96,23 @@ defmodule ATECC508A.Request do
   @doc """
   Create a genkey request message.
   """
-  # @spec genkey(slot(), boolean()) :: transaction()
-  def genkey(transport, id, key_id, create_key?) do
+  @spec genkey(Transport.t(), slot(), boolean()) :: {:ok, binary()} | {:error, atom()}
+  def genkey(transport, key_id, create_key?) do
     mode2 = if create_key?, do: 1, else: 0
     mode3 = 0
     mode4 = 0
 
     payload = <<@atecc508a_op_genkey, 0::3, mode4::1, mode3::1, mode2::1, 0::2, key_id>>
 
-    transport.request(id, payload, 653, 64)
+    Transport.request(transport, payload, 653, 64)
     |> interpret_result()
   end
 
   @doc """
   Create a message to lock a zone.
   """
-  # @spec lock_zone(zone(), ATECC508A.crc16()) :: transaction()
-  def lock_zone(transport, id, zone, zone_crc) do
+  @spec lock_zone(Transport.t(), zone(), ATECC508A.crc16()) :: :ok | {:error, atom()}
+  def lock_zone(transport, zone, zone_crc) do
     # Need to calculate the CRC of everything written in the zone to be
     # locked for this to work.
 
@@ -120,8 +120,9 @@ defmodule ATECC508A.Request do
     mode = if zone == :config, do: 0, else: 1
     payload = <<@atecc508a_op_lock, mode, zone_crc::binary>>
 
-    transport.request(id, payload, 35, 1)
+    Transport.request(transport, payload, 35, 1)
     |> interpret_result()
+    |> return_status()
   end
 
   defp zone_index(:config), do: 0

@@ -10,7 +10,7 @@ defmodule ATECC508A.Request do
   @type block :: 0..3
   @type offset :: 0..7
   @type access_size :: 4 | 32
-  @type access_data :: <<_::32>> | <<_::1024>>
+  @type access_data :: <<_::32>> | <<_::256>>
   @type addr :: 0..65535
 
   @typedoc """

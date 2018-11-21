@@ -65,6 +65,31 @@ defmodule ATECC508A.Configuration do
   end
 
   @doc """
+  Write the configuration.
+
+  This only works when the ATECC508A is unlocked and only bytes not all bytes can
+  be changed. This only writes the ones that can.
+  """
+  @spec write(Transport.t(), t()) :: :ok | {:error, atom()}
+  def write(transport, info = %__MODULE__{}) do
+    data = to_raw(info)
+
+    <<_read_only::16-bytes, writable0::16-bytes, writable1::32-bytes, writable2::20-bytes,
+      _special::8-bytes, x509::4-bytes, key_config::32-bytes>> = data
+
+    # Use 4-byte writes for everything except for writable1 and key_config which both
+    # land on 32-byte boundaries
+
+    with :ok <- multi_write(transport, 16, writable0),
+         :ok <- Request.write_zone(transport, :config, Request.to_config_addr(32), writable1),
+         :ok <- multi_write(transport, 64, writable2),
+         :ok <- multi_write(transport, 92, x509),
+         :ok <- Request.write_zone(transport, :config, Request.to_config_addr(96), key_config) do
+      :ok
+    end
+  end
+
+  @doc """
   Read the entire contents of the configuration zone and don't interpret them
   """
   @spec read_all_raw(Transport.t()) :: {:ok, <<_::1024>>} | {:error, atom()}
@@ -142,12 +167,12 @@ defmodule ATECC508A.Configuration do
   """
   @spec from_raw(<<_::1024>>) :: t()
   def from_raw(
-         <<sn0_3::4-bytes, rev_num::4-bytes, sn4_8::5-bytes, reserved0, i2c_enable, reserved1,
-           i2c_address, reserved2, otp_mode, chip_mode, slot_config::32-bytes,
-           counter0::little-64, counter1::little-64, last_key_use::16-bytes, user_extra, selector,
-           lock_value, lock_config, slot_locked::little-16, rfu::2-bytes, x509_format::4-bytes,
-           key_config::32-bytes>>
-       ) do
+        <<sn0_3::4-bytes, rev_num::4-bytes, sn4_8::5-bytes, reserved0, i2c_enable, reserved1,
+          i2c_address, reserved2, otp_mode, chip_mode, slot_config::32-bytes, counter0::little-64,
+          counter1::little-64, last_key_use::16-bytes, user_extra, selector, lock_value,
+          lock_config, slot_locked::little-16, rfu::2-bytes, x509_format::4-bytes,
+          key_config::32-bytes>>
+      ) do
     %__MODULE__{
       serial_number: sn0_3 <> sn4_8,
       rev_num: decode_rev_num(rev_num),
@@ -181,12 +206,13 @@ defmodule ATECC508A.Configuration do
     <<sn0_3::4-bytes, sn4_8::5-bytes>> = info.serial_number
     rev_num = encode_rev_num(info.rev_num)
 
-    <<sn0_3::4-bytes, rev_num::4-bytes, sn4_8::5-bytes, info.reserved0, info.i2c_enable, info.reserved1,
-    info.i2c_address, info.reserved2, info.otp_mode, info.chip_mode, info.slot_config::32-bytes,
-    info.counter0::little-64, info.counter1::little-64, info.last_key_use::16-bytes, info.user_extra, info.selector,
-    info.lock_value, info.lock_config, info.slot_locked::little-16, info.rfu::2-bytes, info.x509_format::4-bytes,
-    info.key_config::32-bytes>>
-end
+    <<sn0_3::4-bytes, rev_num::4-bytes, sn4_8::5-bytes, info.reserved0, info.i2c_enable,
+      info.reserved1, info.i2c_address, info.reserved2, info.otp_mode, info.chip_mode,
+      info.slot_config::32-bytes, info.counter0::little-64, info.counter1::little-64,
+      info.last_key_use::16-bytes, info.user_extra, info.selector, info.lock_value,
+      info.lock_config, info.slot_locked::little-16, info.rfu::2-bytes, info.x509_format::4-bytes,
+      info.key_config::32-bytes>>
+  end
 
   # These were found by grep'ing Crytoauthlib
   defp decode_rev_num(<<0x00, 0x00, 0x60, 0x01>>), do: :ecc608a_1
@@ -217,6 +243,4 @@ end
       error -> error
     end
   end
-
-
 end

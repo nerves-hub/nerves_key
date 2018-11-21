@@ -89,6 +89,66 @@ defmodule ATECC508A.ConfigurationTest do
                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 175, 143>>
   end
 
+  test "write everything" do
+    info = %ATECC508A.Configuration{
+      chip_mode: 0,
+      counter0: 4_294_967_295,
+      counter1: 4_294_967_295,
+      i2c_address: 192,
+      i2c_enable: 21,
+      key_config:
+        <<51, 0, 51, 0, 51, 0, 28, 0, 28, 0, 28, 0, 28, 0, 28, 0, 60, 0, 60, 0, 60, 0, 60, 0, 60,
+          0, 60, 0, 60, 0, 28, 0>>,
+      last_key_use:
+        <<255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255>>,
+      lock_config: 85,
+      lock_value: 85,
+      otp_mode: 85,
+      reserved0: 192,
+      reserved1: 0,
+      reserved2: 0,
+      rev_num: :ecc508a,
+      rfu: <<0, 0>>,
+      selector: 0,
+      serial_number: <<1, 35, 11, 195, 244, 133, 240, 153, 238>>,
+      slot_config:
+        <<143, 32, 15, 15, 15, 15, 15, 15, 143, 143, 143, 143, 159, 143, 175, 143, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 175, 143>>,
+      slot_locked: 65535,
+      user_extra: 0,
+      x509_format: <<0, 0, 0, 0>>
+    }
+
+    ATECC508A.Transport.Mock
+    |> expect(:request, fn _, <<18, 0, 4, 0, 192, 0, 85, 0>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 5, 0, 143, 32, 15, 15>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 6, 0, 15, 15, 15, 15>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 7, 0, 143, 143, 143, 143>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _,
+                           <<18, 128, 8, 0, 159, 143, 175, 143, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 175, 143, 255, 255, 255, 255, 0, 0, 0, 0, 255, 255, 255,
+                             255>>,
+                           _,
+                           1 ->
+      {:ok, <<0>>}
+    end)
+    |> expect(:request, fn _, <<18, 0, 16, 0, 0, 0, 0, 0>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 17, 0, 255, 255, 255, 255>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 18, 0, 255, 255, 255, 255>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 19, 0, 255, 255, 255, 255>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 20, 0, 255, 255, 255, 255>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<18, 0, 23, 0, 0, 0, 0, 0>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _,
+                           <<18, 128, 24, 0, 51, 0, 51, 0, 51, 0, 28, 0, 28, 0, 28, 0, 28, 0, 28,
+                             0, 60, 0, 60, 0, 60, 0, 60, 0, 60, 0, 60, 0, 60, 0, 28, 0>>,
+                           _,
+                           1 ->
+      {:ok, <<0>>}
+    end)
+
+    Configuration.write(@mock_transport, info)
+  end
+
   test "write the slot config" do
     ATECC508A.Transport.Mock
     |> expect(:request, fn _, <<18, 0, 5, 0, @test_data0_4>>, _, 1 -> {:ok, <<0>>} end)

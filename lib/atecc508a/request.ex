@@ -24,6 +24,7 @@ defmodule ATECC508A.Request do
   @atecc508a_op_write 0x12
   @atecc508a_op_genkey 0x40
   @atecc508a_op_lock 0x17
+  @atecc508a_op_random 0x1B
 
   # See https://github.com/MicrochipTech/cryptoauthlib/blob/master/lib/atca_execution.c
   # for command max execution times. I'm not sure why they are different from the
@@ -50,7 +51,7 @@ defmodule ATECC508A.Request do
 
   @spec to_data_addr(slot(), 0..416) :: addr()
   def to_data_addr(slot, byte_offset)
-      when slot >= 0 and slot < 16 and byte_offset >= 0 and byte_offset < 128 and
+      when slot >= 0 and slot < 16 and byte_offset >= 0 and byte_offset < 416 and
              rem(byte_offset, 4) == 0 do
     word_offset = div(byte_offset, 4)
     offset = rem(word_offset, 8)
@@ -123,6 +124,17 @@ defmodule ATECC508A.Request do
     Transport.request(transport, payload, 35, 1)
     |> interpret_result()
     |> return_status()
+  end
+
+  @doc """
+  Request a random number.
+  """
+  @spec random(Transport.t()) :: {:ok, binary()} | {:error, atom()}
+  def random(transport) do
+    payload = <<@atecc508a_op_random, 0, 0, 0>>
+
+    Transport.request(transport, payload, 23, 32)
+    |> interpret_result()
   end
 
   defp zone_index(:config), do: 0

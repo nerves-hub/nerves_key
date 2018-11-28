@@ -26,6 +26,35 @@ defmodule ATECC508A.ConfigurationTest do
 
   @test_data_128 @test_data0_32 <> @test_data1_32 <> @test_data2_32 <> @test_data3_32
 
+  @test_config %ATECC508A.Configuration{
+    chip_mode: 0,
+    counter0: 4_294_967_295,
+    counter1: 4_294_967_295,
+    i2c_address: 192,
+    i2c_enable: 21,
+    key_config:
+      <<51, 0, 51, 0, 51, 0, 28, 0, 28, 0, 28, 0, 28, 0, 28, 0, 60, 0, 60, 0, 60, 0, 60, 0, 60, 0,
+        60, 0, 60, 0, 28, 0>>,
+    last_key_use:
+      <<255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255>>,
+    lock_config: 85,
+    lock_value: 85,
+    otp_mode: 85,
+    reserved0: 192,
+    reserved1: 0,
+    reserved2: 0,
+    rev_num: :ecc508a,
+    rfu: <<0, 0>>,
+    selector: 0,
+    serial_number: <<1, 35, 11, 195, 244, 133, 240, 153, 238>>,
+    slot_config:
+      <<143, 32, 15, 15, 15, 15, 15, 15, 143, 143, 143, 143, 159, 143, 175, 143, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 175, 143>>,
+    slot_locked: 65535,
+    user_extra: 0,
+    x509_format: <<0, 0, 0, 0>>
+  }
+
   setup :verify_on_exit!
 
   test "read the entire config zone" do
@@ -90,34 +119,7 @@ defmodule ATECC508A.ConfigurationTest do
   end
 
   test "write everything" do
-    info = %ATECC508A.Configuration{
-      chip_mode: 0,
-      counter0: 4_294_967_295,
-      counter1: 4_294_967_295,
-      i2c_address: 192,
-      i2c_enable: 21,
-      key_config:
-        <<51, 0, 51, 0, 51, 0, 28, 0, 28, 0, 28, 0, 28, 0, 28, 0, 60, 0, 60, 0, 60, 0, 60, 0, 60,
-          0, 60, 0, 60, 0, 28, 0>>,
-      last_key_use:
-        <<255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255>>,
-      lock_config: 85,
-      lock_value: 85,
-      otp_mode: 85,
-      reserved0: 192,
-      reserved1: 0,
-      reserved2: 0,
-      rev_num: :ecc508a,
-      rfu: <<0, 0>>,
-      selector: 0,
-      serial_number: <<1, 35, 11, 195, 244, 133, 240, 153, 238>>,
-      slot_config:
-        <<143, 32, 15, 15, 15, 15, 15, 15, 143, 143, 143, 143, 159, 143, 175, 143, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 175, 143>>,
-      slot_locked: 65535,
-      user_extra: 0,
-      x509_format: <<0, 0, 0, 0>>
-    }
+    info = @test_config
 
     ATECC508A.Transport.Mock
     |> expect(:request, fn _, <<18, 0, 4, 0, 192, 0, 85, 0>>, _, 1 -> {:ok, <<0>>} end)
@@ -178,12 +180,11 @@ defmodule ATECC508A.ConfigurationTest do
   end
 
   test "lock config" do
-    config_data = @test_data_128
-    crc = ATECC508A.CRC.crc(config_data)
+    expected_crc = @test_config |> Configuration.to_raw() |> ATECC508A.CRC.crc()
 
     ATECC508A.Transport.Mock
-    |> expect(:request, fn _, <<0x17, 0, ^crc::binary>>, _, 1 -> {:ok, <<0>>} end)
+    |> expect(:request, fn _, <<0x17, 0, ^expected_crc::binary>>, _, 1 -> {:ok, <<0>>} end)
 
-    assert Configuration.lock(@mock_transport, config_data)
+    assert Configuration.lock(@mock_transport, @test_config)
   end
 end

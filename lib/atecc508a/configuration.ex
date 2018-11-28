@@ -155,9 +155,9 @@ defmodule ATECC508A.Configuration do
   written by design. The logic is that this is a final chance before it's too
   late to check that the device is programmed correctly.
   """
-  @spec lock(Transport.t(), ATECC508A.crc16()) :: :ok | {:error, atom()}
+  @spec lock(Transport.t(), t()) :: :ok | {:error, atom()}
   def lock(transport, expected_contents) do
-    crc = ATECC508A.CRC.crc(expected_contents)
+    crc = expected_contents |> to_raw() |> ATECC508A.CRC.crc()
 
     Request.lock_zone(transport, :config, crc)
   end

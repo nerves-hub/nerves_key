@@ -9,7 +9,7 @@ defmodule ATECC508A.Transport.I2C do
 
   @default_atecc508a_address 0x60
 
-  @type instance :: {Circuits.I2C.i2c_bus(), Circuits.I2C.i2c_address()}
+  @type instance :: {Circuits.I2C.bus(), Circuits.I2C.address()}
 
   @impl Transport
   @spec init(keyword()) :: {:ok, Transport.t()} | {:error, atom()}

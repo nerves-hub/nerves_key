@@ -1,0 +1,81 @@
+defmodule NervesKey.OTP do
+  @moduledoc """
+  This module handles OTP data stored in the Nerves Key.
+  """
+
+  alias ATECC508A.{OTPZone, Transport, Util}
+
+  @magic <<0x4E, 0x72, 0x76, 0x73>>
+
+  defstruct [
+    :flags,
+    :board_name,
+    :manufacturer_sn,
+    :user
+  ]
+
+  @type t :: %__MODULE__{
+          flags: non_neg_integer(),
+          manufacturer_sn: binary(),
+          board_name: binary(),
+          user: <<_::256>>
+        }
+
+  @doc """
+  Create a blank Nerves Key OTP data struct
+  """
+  @spec new() :: t()
+  def new() do
+    %__MODULE__{flags: 0, board_name: "", manufacturer_sn: "", user: <<0::size(256)>>}
+  end
+
+  @doc """
+  Read Nerves Key information from the OTP data.
+  """
+  @spec read(Transport.t()) :: {:ok, t()} | {:error, atom()}
+  def read(transport) do
+    with {:ok, data} <- OTPZone.read(transport) do
+      from_raw(data)
+    end
+  end
+
+  @doc """
+  Write Nerves Key information to the OTP data.
+  """
+  @spec write(Transport.t(), t()) :: :ok | {:error, atom()}
+  def write(transport, info) do
+    data = to_raw(info)
+    OTPZone.write(transport, data)
+  end
+
+  @doc """
+  Convert a raw configuration to a nice map.
+  """
+  @spec from_raw(<<_::512>>) :: {:ok, t()} | {:error, atom()}
+  def from_raw(
+        <<@magic::binary(), flags::size(16), board_name::10-bytes, manufacturer_sn::16-bytes,
+          user::32-bytes>>
+      ) do
+    %__MODULE__{
+      flags: flags,
+      board_name: Util.trim_zeros(board_name),
+      manufacturer_sn: Util.trim_zeros(manufacturer_sn),
+      user: user
+    }
+  end
+
+  def from_raw(_other), do: {:error, :not_nerves_key}
+
+  @doc """
+  Convert a nice config map back to a raw configuration
+  """
+  @spec to_raw(t()) :: <<_::512>>
+  def to_raw(info) do
+    board_name = Util.pad_zeros(info.board_name, 10)
+    manufacturer_sn = Util.pad_zeros(info.manufacturer_sn, 16)
+    user = Util.pad_zeros(info.user, 32)
+
+    <<@magic::binary(), info.flags::size(16), board_name::binary(), manufacturer_sn::binary(),
+      user::binary()>>
+  end
+end

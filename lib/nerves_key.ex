@@ -1,4 +1,4 @@
-defmodule ATECC508A.NervesKey do
+defmodule NervesKey do
   @moduledoc """
   This is a high level interface to provisioning and using the Nerves Key
   or any ATECC508A/608A that can be configured similarly.
@@ -61,6 +61,8 @@ defmodule ATECC508A.NervesKey do
       {:ok, answer}
     end
   end
+
+  #  def write_otp(transport, )
 
   # See the README.md for an easier-to-view version of what bytes matter
   defp slot_config_compatible(

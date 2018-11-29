@@ -1,5 +1,6 @@
 defmodule ATECC508A.Transport.I2C do
   alias ATECC508A.Transport
+  require Logger
 
   @behaviour Transport
 
@@ -31,9 +32,11 @@ defmodule ATECC508A.Transport.I2C do
     response_len = response_payload_len + 3
 
     with :ok <- wakeup(i2c, address),
+         Logger.debug("ATECC508A: Sending #{inspect(to_send, binaries: :as_binaries)}"),
          :ok <- Circuits.I2C.write(i2c, address, to_send),
          Process.sleep(timeout),
          {:ok, response} <- Circuits.I2C.read(i2c, address, response_len),
+         Logger.info("ATECC508A: Received #{inspect(response, binaries: :as_binaries)}"),
          sleep(i2c, address) do
       unpackage(response)
     end

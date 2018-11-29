@@ -26,8 +26,8 @@ defmodule ATECC508A.OTPZone do
   def write(transport, data) do
     <<lo::32-bytes, hi::32-bytes>> = data
 
-    with :ok <- Request.write_zone(transport, :otp, Request.to_otp_addr(32), lo),
-         :ok <- Request.write_zone(transport, :otp, Request.to_otp_addr(96), hi) do
+    with :ok <- Request.write_zone(transport, :otp, Request.to_otp_addr(0), lo),
+         :ok <- Request.write_zone(transport, :otp, Request.to_otp_addr(32), hi) do
       :ok
     end
   end

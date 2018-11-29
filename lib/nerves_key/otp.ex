@@ -22,11 +22,11 @@ defmodule NervesKey.OTP do
         }
 
   @doc """
-  Create a blank Nerves Key OTP data struct
+  Create a Nerves Key OTP data struct
   """
-  @spec new() :: t()
-  def new() do
-    %__MODULE__{flags: 0, board_name: "", manufacturer_sn: "", user: <<0::size(256)>>}
+  @spec new(String.t(), String.t(), binary()) :: t()
+  def new(board_name, manufacturer_sn, user \\ <<0::size(256)>>) do
+    %__MODULE__{flags: 0, board_name: board_name, manufacturer_sn: manufacturer_sn, user: user}
   end
 
   @doc """

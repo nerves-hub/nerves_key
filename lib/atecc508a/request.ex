@@ -103,7 +103,8 @@ defmodule ATECC508A.Request do
     mode3 = 0
     mode4 = 0
 
-    payload = <<@atecc508a_op_genkey, 0::3, mode4::1, mode3::1, mode2::1, 0::2, key_id>>
+    payload =
+      <<@atecc508a_op_genkey, 0::3, mode4::1, mode3::1, mode2::1, 0::2, key_id::little-16>>
 
     Transport.request(transport, payload, 653, 64)
     |> interpret_result()

@@ -123,21 +123,21 @@ defmodule ATECC508A.RequestTest do
 
   test "genkey slot 0" do
     ATECC508A.Transport.Mock
-    |> expect(:request, fn _, <<0x40, 4, 0>>, 653, 64 -> {:ok, @test_data_64} end)
+    |> expect(:request, fn _, <<0x40, 4, 0, 0>>, 653, 64 -> {:ok, @test_data_64} end)
 
     assert Request.genkey(@mock_transport, 0, true) == {:ok, @test_data_64}
   end
 
   test "genkey slot 0, no create" do
     ATECC508A.Transport.Mock
-    |> expect(:request, fn _, <<0x40, 0, 0>>, 653, 64 -> {:ok, @test_data_64} end)
+    |> expect(:request, fn _, <<0x40, 0, 0, 0>>, 653, 64 -> {:ok, @test_data_64} end)
 
     assert Request.genkey(@mock_transport, 0, false) == {:ok, @test_data_64}
   end
 
   test "genkey slot 5" do
     ATECC508A.Transport.Mock
-    |> expect(:request, fn _, <<0x40, 4, 5>>, 653, 64 -> {:ok, @test_data_64} end)
+    |> expect(:request, fn _, <<0x40, 4, 5, 0>>, 653, 64 -> {:ok, @test_data_64} end)
 
     assert Request.genkey(@mock_transport, 5, true) == {:ok, @test_data_64}
   end

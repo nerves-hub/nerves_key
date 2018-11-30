@@ -34,6 +34,7 @@ defmodule ATECC508A.Transport.I2C do
     with :ok <- wakeup(i2c, address),
          Logger.debug("ATECC508A: Sending #{inspect(to_send, binaries: :as_binaries)}"),
          :ok <- Circuits.I2C.write(i2c, address, to_send),
+         Logger.debug("ATECC508A: Waiting #{timeout} ms"),
          Process.sleep(timeout),
          {:ok, response} <- Circuits.I2C.read(i2c, address, response_len),
          Logger.info("ATECC508A: Received #{inspect(response, binaries: :as_binaries)}"),

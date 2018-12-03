@@ -19,11 +19,13 @@ defmodule ATECC508A.Certificate do
   @doc """
   Create a new device certificate.
 
+  The created certificate is compatible with ATECC508A certificate compression.
+
   Parameters:
 
-  * `public_key` - the public key to be signed (from ATECC508A)
-  * `serial` - the certificate's serial number (from ATECC508A)
-  * `subject_rdn` - anything for the subject field (e.g., "/CN=<manufacturer serial number>")
+  * `atecc508a_public_key` - the public key to be signed (from ATECC508A)
+  * `atecc508a_sn` - the ATECC508a's serial number - used to compute the certificate's serial number
+  * `manufacturer_sn` - the manufacturer's desired serial number - used as the common name
   * `signer` - the signer's certificate
   * `signer_key` - the signer's private key
   """
@@ -43,9 +45,69 @@ defmodule ATECC508A.Certificate do
     x509_validity = X509.Certificate.Validity.new(not_before_dt, not_after_dt)
 
     x509_cert_sn = ATECC508A.SerialNumber.from_device_sn(atecc508a_sn, compressed_validity)
-    template = template(x509_cert_sn, x509_validity)
+    template = device_template(x509_cert_sn, x509_validity)
 
     X509.Certificate.new(atecc508a_public_key, subject_rdn, signer, signer_key, template: template)
+  end
+
+  @doc """
+  Create a new signer certificate.
+
+  The signer certificate is a root certificate. I.e. it's not signed by
+  anyone else. Signer certificates and their associated private keys
+  should be stored safely, though. Their overall use is limited to automating
+  the registration of devices to cloud servers like Nerves Hub and
+  Amazon IoT. Once a device has registered, the cloud server will
+  ignore the signer certificate. It is therefore possible to time limit
+  signer certificates, uninstall them from the cloud server, or limit
+  the number of devices they can auto-register.
+
+  The created signer certificate is compatible with ATECC508A certificate
+  compression.
+
+  Parameters:
+
+  * `validity_years` - how many years is this signer certificate valid
+  """
+  @spec new_signer(pos_integer()) :: X509.Certificate.t()
+  def new_signer(validity_years) do
+    # Create a new private key -> consider making this a separate step
+    signer_key = X509.PrivateKey.new_ec(@curve)
+    signer_public_key = X509.PublicKey.derive(signer_key)
+
+    {not_before_dt, not_after_dt} = ATECC508A.Validity.create_compatible_validity(validity_years)
+    compressed_validity = ATECC508A.Validity.compress(not_before_dt, not_after_dt)
+    x509_validity = X509.Certificate.Validity.new(not_before_dt, not_after_dt)
+
+    raw_public_key = raw_public_key(signer_public_key)
+    x509_cert_sn = ATECC508A.SerialNumber.from_public_key(raw_public_key, compressed_validity)
+
+    subject_rdn = X509.RDNSequence.new("/CN=Signer", :otp)
+
+    tbs_cert =
+      otp_tbs_certificate(
+        version: @version,
+        serialNumber: x509_cert_sn,
+        signature: SignatureAlgorithm.new(@hash, signer_key),
+        issuer: subject_rdn,
+        validity: x509_validity,
+        subject: subject_rdn,
+        subjectPublicKeyInfo: PublicKey.wrap(signer_public_key, :OTPSubjectPublicKeyInfo),
+        extensions: [
+          X509.Certificate.Extension.basic_constraints(true, 0),
+          X509.Certificate.Extension.key_usage([:digitalSignature, :keyCertSign, :cRLSign]),
+          X509.Certificate.Extension.ext_key_usage([:serverAuth, :clientAuth]),
+          X509.Certificate.Extension.subject_key_identifier(signer_public_key),
+          X509.Certificate.Extension.authority_key_identifier(signer_public_key)
+        ]
+      )
+
+    signer_cert =
+      tbs_cert
+      |> :public_key.pkix_sign(signer_key)
+      |> X509.Certificate.from_der!()
+
+    {signer_cert, signer_key}
   end
 
   @spec curve() :: :secp256r1
@@ -65,7 +127,7 @@ defmodule ATECC508A.Certificate do
     implies that the serial number is stored in an ATECC508A slot.
 
   """
-  @spec compress(X509.Certificate.t(), keyword()) :: ATECC508A.compressed_cert()
+  @spec compress(X509.Certificate.t(), keyword()) :: ATECC508A.CompressedCertificate.t()
   def compress(cert, opts \\ []) do
     compressed_signature =
       signature(cert)
@@ -88,9 +150,13 @@ defmodule ATECC508A.Certificate do
     format_version = 0x00
     reserved = 0x00
 
-    <<compressed_signature::binary-size(64), compressed_validity::binary-size(3),
+    data = <<compressed_signature::binary-size(64), compressed_validity::binary-size(3),
       signer_id::size(16), template_id::size(4), chain_id::size(4), serial_number_source::size(4),
       format_version::size(4), reserved>>
+
+    %ATECC508A.CompressedCertificate{
+      data: data
+    }
   end
 
   @doc """
@@ -228,6 +294,15 @@ defmodule ATECC508A.Certificate do
     |> Keyword.get(:keyIdentifier)
   end
 
+  @doc """
+  Return the raw public key bits from one in X509 form.
+  """
+  @spec raw_public_key(X509.PublicKey.t()) :: ATECC508A.ecc_public_key()
+  def raw_public_key(public_key) do
+    {{:ECPoint, <<4, raw_key::64-bytes>>}, _} = public_key
+    raw_key
+  end
+
   # Helpers
 
   defp unsigned_to_signed_bin(<<1::size(1), _::size(7), _::binary>> = bin),
@@ -249,7 +324,7 @@ defmodule ATECC508A.Certificate do
     """
   end
 
-  defp template(serial, validity) do
+  defp device_template(serial, validity) do
     %Template{
       serial: serial,
       validity: validity,

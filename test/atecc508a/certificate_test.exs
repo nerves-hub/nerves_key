@@ -7,7 +7,25 @@ defmodule ATECC508A.CertificateTest do
     generate_ca()
   end
 
-  test "new", %{ca: signer, ca_key: signer_key} do
+  test "new signer cert" do
+    {signer_cert, _signer_key} = ATECC508A.Certificate.new_signer(2)
+
+    rdn = signer_cert |> X509.Certificate.subject() |> X509.RDNSequence.to_string()
+
+    assert rdn == "/CN=Signer"
+
+    # TODO - test self-signed?
+  end
+
+  test "signer certs can be compressed" do
+    {signer_cert, _signer_key} = ATECC508A.Certificate.new_signer(1)
+
+    compressed_cert = ATECC508A.Certificate.compress(signer_cert)
+    decompressed_cert = ATECC508A.Certificate.decompress(compressed_cert, public_key, subject_rdn, serial_fun, signer_fun)
+    assert decompressed_cert == signer_cert
+  end
+
+  test "new device cert", %{ca: signer, ca_key: signer_key} do
     public_key = Sim508A.otp_genkey()
     ecc508a_sn = Sim508A.serial_number()
     manufacturing_sn = "1234"
@@ -45,7 +63,8 @@ defmodule ATECC508A.CertificateTest do
       )
 
     compressed = ATECC508A.Certificate.compress(otp_cert)
-    assert byte_size(compressed) == 72
+    assert byte_size(compressed.data) == 72
+    assert compressed.device_sn == ecc508a_sn
   end
 
   test "decompress", %{ca: signer, ca_key: signer_key} do
@@ -124,28 +143,7 @@ defmodule ATECC508A.CertificateTest do
   end
 
   defp generate_ca() do
-    opts = [
-      serial: random_sn(),
-      hash: ATECC508A.Certificate.hash(),
-      extensions: [
-        key_usage: X509.Certificate.Extension.key_usage([:keyCertSign, :cRLSign]),
-        basic_constraints: X509.Certificate.Extension.basic_constraints(true),
-        subject_key_identifier: true,
-        authority_key_identifier: false
-      ]
-    ]
-
-    template = X509.Certificate.Template.new(:root_ca, opts)
-    ca_key = X509.PrivateKey.new_ec(ATECC508A.Certificate.curve())
-    subject_rdn = "/O=MyOrg Root"
-    ca = X509.Certificate.self_signed(ca_key, subject_rdn, template: template)
+    {ca, ca_key} = ATECC508A.Certificate.new_signer(1)
     %{ca: ca, ca_key: ca_key}
-  end
-
-  defp random_sn() do
-    bytes = 20
-    <<i::unsigned-size(bytes)-unit(8)>> = :crypto.strong_rand_bytes(bytes)
-
-    i
   end
 end

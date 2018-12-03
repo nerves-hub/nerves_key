@@ -40,4 +40,9 @@ defmodule ATECC508A do
   A CRC16 as computed by the ATECC508A
   """
   @type crc16() :: <<_::16>>
+
+  @typedoc """
+  The serial number source for a compressed certificate
+  """
+  @type sn_source() :: :random | :public_key | :device_sn
 end

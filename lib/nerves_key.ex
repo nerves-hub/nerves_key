@@ -25,4 +25,9 @@ defmodule NervesKey do
   """
   @spec config_compatible?(ATECC508A.Transport.t()) :: {:error, atom()} | {:ok, boolean()}
   defdelegate config_compatible?(transport), to: NervesKey.Config
+  
+  
+  def create_signing_key() do
+    ATECC
+  end
 end

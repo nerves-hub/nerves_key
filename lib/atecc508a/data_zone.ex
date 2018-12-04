@@ -41,17 +41,38 @@ defmodule ATECC508A.DataZone do
   end
 
   @doc """
-  Write the configuration.
+  Write a slot in the data zone.
 
-  This only works when the ATECC508A is unlocked and only bytes not all bytes can
-  be changed. This only writes the ones that can.
+  This uses 4 byte writes. These are only allowed under some conditions.
+  Most notably, 4-byte writes aren't allowed when the data zone is UNlocked.
   """
   @spec write(Transport.t(), Request.slot(), binary()) :: :ok | {:error, atom()}
   def write(transport, slot, data) do
-    byte_size(data) == slot_size(slot) ||
-      raise "Invalid data size (#{byte_size(data)}) for slot #{slot} (#{slot_size(slot)})"
+    check_data_size(slot, data)
 
     do_write(transport, slot, 0, data)
+  end
+
+  @doc """
+  Write a slot in the data zone and pad to a multiple of 32-bytes
+
+  This is useful to get around 32-byte write limitations. The padded bytes are
+  set to 0.
+  """
+  @spec write_padded(Transport.t(), Request.slot(), binary()) :: :ok | {:error, atom()}
+  def write_padded(transport, slot, data) do
+    check_data_size(slot, data)
+
+    # pad the data up to a multiple of 32
+    pad_count = 32 - rem(byte_size(data), 32)
+    padded_data = data <> <<0::size(pad_count)-unit(8)>>
+
+    do_write(transport, slot, 0, padded_data)
+  end
+
+  defp check_data_size(slot, data) do
+    byte_size(data) <= slot_size(slot) ||
+      raise "Invalid data size (#{byte_size(data)}) for slot #{slot} (#{slot_size(slot)})"
   end
 
   defp do_write(_transport, _slot, _offset, <<>>), do: :ok

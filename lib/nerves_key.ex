@@ -4,30 +4,56 @@ defmodule NervesKey do
   or any ATECC508A/608A that can be configured similarly.
   """
 
+  alias NervesKey.{Config, OTP, Data}
+
   @doc """
   Configure an ATECC508A or ATECC608A as a Nerves Key.
-
-  This can only be called once. Subsequent calls will fail.
   """
-  defdelegate configure(transport), to: NervesKey.Config
+  def configure(transport) do
+    cond do
+      Config.config_compatible?(transport) == {:ok, true} -> :ok
+      Config.configured?(transport) == {:ok, true} -> {:error, :config_locked}
+      true -> Config.configure(transport)
+    end
+  end
 
   @doc """
-  Check whether the ATECC508A has been configured or not.
+  Create a signing key pair
 
-  If this returns {:ok, false}, then `configure/1` can be called.
+  This returns a tuple that contains the certificate and the private key.
   """
-  @spec configured?(ATECC508A.Transport.t()) :: {:error, atom()} | {:ok, boolean()}
-  defdelegate configured?(transport), to: NervesKey.Config
+  def create_signing_key_pair() do
+    ATECC508A.Certificate.new_signer(1)
+  end
 
   @doc """
-  Check if the chip's configuration is compatible with the Nerves Key. This only checks
-  what's important for the Nerves Key.
+  Provision a NervesKey in one step
+
+  This function does it all, but it requires the signer's private key.
   """
-  @spec config_compatible?(ATECC508A.Transport.t()) :: {:error, atom()} | {:ok, boolean()}
-  defdelegate config_compatible?(transport), to: NervesKey.Config
-  
-  
-  def create_signing_key() do
-    ATECC
+  @spec provision(
+          ATECC508A.Transport.t(),
+          NervesKey.ProvisioningInfo.t(),
+          X509.Certificate.t(),
+          X509.PrivateKey.t()
+        ) :: :ok
+  def provision(transport, info, signer_cert, signer_key) do
+    :ok = configure(transport)
+    otp_info = OTP.new(info.board_name, info.manufacturer_sn)
+    :ok = OTP.write(transport, otp_info)
+    {:ok, device_public_key} = Data.genkey(transport)
+    {:ok, device_sn} = Config.device_sn(transport)
+
+    device_cert =
+      ATECC508A.Certificate.new_device(
+        device_public_key,
+        device_sn,
+        info.manufacturer_sn,
+        signer_cert,
+        signer_key
+      )
+
+    :ok = Data.write_certificates(transport, device_cert, signer_cert)
+    # :ok = Data.lock(transport)
   end
 end

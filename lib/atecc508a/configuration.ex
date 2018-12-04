@@ -214,7 +214,7 @@ defmodule ATECC508A.Configuration do
       info.key_config::32-bytes>>
   end
 
-  # These were found by grep'ing Crytoauthlib
+  # These were found by in cryptoauthlib
   defp decode_rev_num(<<0x00, 0x00, 0x60, 0x01>>), do: :ecc608a_1
   defp decode_rev_num(<<0x00, 0x00, 0x60, 0x02>>), do: :ecc608a_2
   defp decode_rev_num(<<0x00, 0x00, 0x50, 0x00>>), do: :ecc508a

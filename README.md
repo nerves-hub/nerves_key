@@ -36,9 +36,12 @@ Slot | Description                       | SlotConfig | KeyConfig | Primary prop
 10   | Device certificate                | 0F 0F      | 3C 00     | Clear read/write; lockable
 11   | Signer public key                 | 0F 0F      | 30 00     | P256; Clear read/write; lockable
 12   | Signer certificate                | 0F 0F      | 3C 00     | Clear read/write; lockable
-13   | Signer serial number              | 0F 0F      | 3C 00     | Clear read/write; lockable
+13   | Signer serial number*             | 0F 0F      | 3C 00     | Clear read/write; lockable
 14   | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
 15   | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
+
+* The signer serial number slot is currently unused since the signer's cert is computed from the
+  public key
 
 The ATECC508A includes a 64 byte OTP (one-time programmable) memory. It has the following
 layout:

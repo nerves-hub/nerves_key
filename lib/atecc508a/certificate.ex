@@ -127,8 +127,8 @@ defmodule ATECC508A.Certificate do
   * `cert` - the certificate to compress
   * `template` - the template that will be used on the decompression side
   """
-  @spec compress(X509.Certificate.t(), ATECC508A.Certificate.Template.t()) ::
-          ATECC508A.Certificate.Compressed.t()
+  # @spec compress(X509.Certificate.t(), ATECC508A.Certificate.Template.t()) ::
+  #         ATECC508A.Certificate.Compressed.t()
   def compress(cert, template) do
     compressed_signature =
       signature(cert)

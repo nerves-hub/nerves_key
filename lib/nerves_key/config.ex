@@ -37,6 +37,15 @@ defmodule NervesKey.Config do
   end
 
   @doc """
+  Helper for getting the ATECC508A's serial number.
+  """
+  def device_sn(transport) do
+    with {:ok, info} <- Configuration.read(transport) do
+      {:ok, info.serial_number}
+    end
+  end
+
+  @doc """
   Check whether the ATECC508A has been configured or not.
 
   If this returns {:ok, false}, then `configure/1` can be called.
@@ -56,7 +65,7 @@ defmodule NervesKey.Config do
   def config_compatible?(transport) do
     with {:ok, info} <- Configuration.read(transport) do
       answer =
-        info.chip_mode == 0 && slot_config_compatible(info.slot_config) &&
+        info.lock_config == 0 && info.chip_mode == 0 && slot_config_compatible(info.slot_config) &&
           key_config_compatible(info.key_config)
 
       {:ok, answer}

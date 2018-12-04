@@ -20,8 +20,11 @@ defmodule ATECC508A.CertificateTest do
   test "signer certs can be compressed" do
     {signer_cert, _signer_key} = ATECC508A.Certificate.new_signer(1)
 
-    compressed_cert = ATECC508A.Certificate.compress(signer_cert)
-    decompressed_cert = ATECC508A.Certificate.decompress(compressed_cert, public_key, subject_rdn, serial_fun, signer_fun)
+    compressed_cert =
+      ATECC508A.Certificate.compress(signer_cert, ATECC508A.Certificate.Template.signer())
+
+    decompressed_cert = ATECC508A.Certificate.decompress(compressed_cert)
+
     assert decompressed_cert == signer_cert
   end
 
@@ -62,7 +65,9 @@ defmodule ATECC508A.CertificateTest do
         signer_key
       )
 
-    compressed = ATECC508A.Certificate.compress(otp_cert)
+    compressed =
+      ATECC508A.Certificate.compress(otp_cert, ATECC508A.Certificate.Template.device(ecc508a_sn))
+
     assert byte_size(compressed.data) == 72
     assert compressed.device_sn == ecc508a_sn
   end
@@ -71,12 +76,6 @@ defmodule ATECC508A.CertificateTest do
     public_key = Sim508A.otp_genkey()
     ecc508a_sn = Sim508A.serial_number()
     manufacturing_sn = "1234"
-
-    ecc508a_validity =
-      ATECC508A.Validity.create_compatible_validity(31)
-      |> ATECC508A.Validity.compress()
-
-    cert_sn = ATECC508A.SerialNumber.from_device_sn(ecc508a_sn, ecc508a_validity)
 
     otp_cert =
       ATECC508A.Certificate.new_device(
@@ -87,16 +86,10 @@ defmodule ATECC508A.CertificateTest do
         signer_key
       )
 
-    compressed = ATECC508A.Certificate.compress(otp_cert)
+    compressed =
+      ATECC508A.Certificate.compress(otp_cert, ATECC508A.Certificate.Template.device(ecc508a_sn))
 
-    decompressed =
-      ATECC508A.Certificate.decompress(
-        compressed,
-        public_key,
-        "/CN=#{manufacturing_sn}",
-        fn _ -> cert_sn end,
-        fn _ -> signer end
-      )
+    decompressed = ATECC508A.Certificate.decompress(compressed)
 
     assert otp_cert == decompressed
   end

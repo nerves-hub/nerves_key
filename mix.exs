@@ -44,7 +44,6 @@ defmodule Atecc508a.MixProject do
   defp deps do
     [
       {:x509, "~> 0.5"},
-      # {:x509, github: "voltone/x509", branch: "master"},
       {:circuits_i2c, "~> 0.2"},
       {:ex_doc, "~> 0.11", only: :dev, runtime: false},
       {:dialyxir, "1.0.0-rc.4", only: :dev, runtime: false},

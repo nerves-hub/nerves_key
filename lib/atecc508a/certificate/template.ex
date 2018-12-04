@@ -1,24 +1,23 @@
 defmodule ATECC508A.Certificate.Template do
-
-  defstruct [:signer_id, :template_id, :sn_source, :device_sn, :certificate_sn]
+  defstruct [:signer_id, :template_id, :chain_id, :sn_source, :device_sn, :certificate_sn]
 
   @type t :: %__MODULE__{
-    signer_id: 0..65535,
-    template_id: 0..15,
-    sn_source: ATECC508A.sn_source(),
-    device_sn: ATECC508A.serial_number() | nil,
-    certificate_sn: binary() | nil
-
-    }
+          signer_id: 0..65535,
+          template_id: 0..15,
+          chain_id: 0..15,
+          sn_source: ATECC508A.sn_source(),
+          device_sn: ATECC508A.serial_number() | nil,
+          certificate_sn: binary() | nil
+        }
 
   @spec signer() :: t()
   def signer() do
     %__MODULE__{
       signer_id: 0,
       template_id: 1,
+      chain_id: 0,
       sn_source: :public_key,
-      device_sn: nil,
-
+      device_sn: nil
     }
   end
 
@@ -27,6 +26,7 @@ defmodule ATECC508A.Certificate.Template do
     %__MODULE__{
       signer_id: 0,
       template_id: 0,
+      chain_id: 0,
       sn_source: :device_sn,
       device_sn: device_sn
     }

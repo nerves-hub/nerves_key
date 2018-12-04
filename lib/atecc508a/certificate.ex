@@ -79,7 +79,7 @@ defmodule ATECC508A.Certificate do
     compressed_validity = ATECC508A.Validity.compress(not_before_dt, not_after_dt)
     x509_validity = X509.Certificate.Validity.new(not_before_dt, not_after_dt)
 
-    raw_public_key = raw_public_key(signer_public_key)
+    raw_public_key = public_key_to_raw(signer_public_key)
     x509_cert_sn = ATECC508A.SerialNumber.from_public_key(raw_public_key, compressed_validity)
 
     subject_rdn = X509.RDNSequence.new("/CN=Signer", :otp)
@@ -119,16 +119,17 @@ defmodule ATECC508A.Certificate do
   @doc """
   Compress an X.509 certificate for storage in an ATECC508A slot.
 
-  Options:
+  Not all X.509 certificates are compressible. Most aren't. It's probably
+  only practical to go through `new_device` and `new_signer`.
 
-  * `signer_id` - The number to put in the signer ID field
-  * `serial_number_source` - What was used to create the certificate's serial
-    number. Choices are `:device_sn`, `:public_key`, or `:random`. `:random`
-    implies that the serial number is stored in an ATECC508A slot.
+  Parameters:
 
+  * `cert` - the certificate to compress
+  * `template` - the template that will be used on the decompression side
   """
-  @spec compress(X509.Certificate.t(), keyword()) :: ATECC508A.CompressedCertificate.t()
-  def compress(cert, opts \\ []) do
+  @spec compress(X509.Certificate.t(), ATECC508A.Certificate.Template.t()) ::
+          ATECC508A.Certificate.Compressed.t()
+  def compress(cert, template) do
     compressed_signature =
       signature(cert)
       |> compress_signature()
@@ -137,66 +138,54 @@ defmodule ATECC508A.Certificate do
       X509.Certificate.validity(cert)
       |> compress_validity()
 
-    signer_id = opts[:signer_id] || 0x00
-    serial_number_source = opts[:serial_number_source] || :device_sn
+    serial_number_source = serial_number_source(template.sn_source)
 
-    # Template ID
-    #  0:   Use the device template
-    #  1:   Use the signer template
-    #  (n): issuer template or higher
-    template_id = 1
-    chain_id = 0
-    serial_number_source = serial_number_source(serial_number_source)
     format_version = 0x00
     reserved = 0x00
 
-    data = <<compressed_signature::binary-size(64), compressed_validity::binary-size(3),
-      signer_id::size(16), template_id::size(4), chain_id::size(4), serial_number_source::size(4),
-      format_version::size(4), reserved>>
+    data =
+      <<compressed_signature::binary-size(64), compressed_validity::binary-size(3),
+        template.signer_id::size(16), template.template_id::size(4), template.chain_id::size(4),
+        serial_number_source::size(4), format_version::size(4), reserved>>
 
-    %ATECC508A.CompressedCertificate{
-      data: data
+    %ATECC508A.Certificate.Compressed{
+      data: data,
+      device_sn: template.device_sn,
+      public_key: X509.Certificate.public_key(cert) |> public_key_to_raw(),
+      serial_number: X509.Certificate.serial(cert),
+      subject_rdn: X509.Certificate.subject(cert),
+      issuer_rdn: X509.Certificate.issuer(cert),
+      extensions: X509.Certificate.extensions(cert),
+      template: template
     }
   end
 
   @doc """
   Decompress an ECC508A certificate back to it's X.509 form.
   """
-  @spec decompress(
-          ATECC508A.compressed_cert(),
-          :public_key.ec_public_key(),
-          String.t() | X509.RDNSequence.t(),
-          (any() -> any()),
-          (any() -> :public_key.ec_public_key())
-        ) :: X509.Certificate.t()
-  def decompress(compressed_cert, public_key, subject_rdn, serial_fun, signer_fun) do
+  @spec decompress(ATECC508A.Certificate.Compressed.t()) :: X509.Certificate.t()
+  def decompress(compressed) do
     <<
       compressed_signature::binary-size(64),
       compressed_validity::binary-size(3),
       signer_id::size(16),
-      _template_id::size(4),
-      _chain_id::size(4),
+      template_id::size(4),
+      chain_id::size(4),
       serial_number_source::size(4),
-      _format_version::size(4),
-      _reserved::size(8)
-    >> = compressed_cert
+      format_version::size(4),
+      0::size(8)
+    >> = compressed.data
 
-    x509_serial_number = serial_fun.(serial_number_source)
-    signer = signer_fun.(signer_id)
+    template = compressed.template
 
-    signer_rdn =
-      case signer do
-        X509.ASN1.certificate(tbsCertificate: tbs) ->
-          # FIXME: avoid calls to undocumented functions in :public_key app
-          tbs
-          |> otp_tbs_certificate(:subject)
-          |> :pubkey_cert_records.transform(:decode)
+    format_version == 0 || raise "Format version mismatch"
+    template_id == template.template_id || raise "Template ID mismatch"
+    signer_id == template.signer_id || raise "Signer ID mismatch"
+    chain_id == template.chain_id || raise "Chain ID mismatch"
 
-        otp_certificate(tbsCertificate: tbs) ->
-          otp_tbs_certificate(tbs, :subject)
-      end
+    x509_serial_number = decompress_sn(serial_number_source, compressed, compressed_validity)
 
-    signer_public_key = X509.Certificate.public_key(signer)
+    subject_public_key = raw_to_public_key(compressed.public_key)
 
     signature_alg = SignatureAlgorithm.new(@hash, :ecdsa)
 
@@ -206,23 +195,18 @@ defmodule ATECC508A.Certificate do
         serialNumber: x509_serial_number,
         signature: signature_alg,
         issuer:
-          case signer_rdn do
-            {:rdnSequence, _} -> signer_rdn
+          case compressed.issuer_rdn do
+            {:rdnSequence, _} -> compressed.issuer_rdn
             name when is_binary(name) -> RDNSequence.new(name, :otp)
           end,
         validity: decompress_validity(compressed_validity),
         subject:
-          case subject_rdn do
-            {:rdnSequence, _} -> subject_rdn
+          case compressed.subject_rdn do
+            {:rdnSequence, _} -> compressed.subject_rdn
             name when is_binary(name) -> RDNSequence.new(name, :otp)
           end,
-        subjectPublicKeyInfo: PublicKey.wrap(public_key, :OTPSubjectPublicKeyInfo),
-        extensions: [
-          X509.Certificate.Extension.basic_constraints(false),
-          X509.Certificate.Extension.key_usage([:digitalSignature, :keyEncipherment]),
-          X509.Certificate.Extension.ext_key_usage([:clientAuth]),
-          X509.Certificate.Extension.authority_key_identifier(signer_public_key)
-        ]
+        subjectPublicKeyInfo: PublicKey.wrap(subject_public_key, :OTPSubjectPublicKeyInfo),
+        extensions: compressed.extensions
       )
 
     otp_certificate(
@@ -278,6 +262,21 @@ defmodule ATECC508A.Certificate do
     X509.Certificate.Validity.new(not_before, not_after)
   end
 
+  def decompress_sn(0x00, compressed, _compressed_validity) do
+    # Stored serial number
+    compressed.serial_number
+  end
+
+  def decompress_sn(0x0A, compressed, compressed_validity) do
+    # Calculated from public key
+    ATECC508A.SerialNumber.from_public_key(compressed.public_key, compressed_validity)
+  end
+
+  def decompress_sn(0x0B, compressed, compressed_validity) do
+    # Calculated from device serial number
+    ATECC508A.SerialNumber.from_device_sn(compressed.device_sn, compressed_validity)
+  end
+
   @spec signature(X509.Certificate.t()) :: any()
   def signature(otp_cert) do
     otp_certificate(otp_cert, :signature)
@@ -297,10 +296,20 @@ defmodule ATECC508A.Certificate do
   @doc """
   Return the raw public key bits from one in X509 form.
   """
-  @spec raw_public_key(X509.PublicKey.t()) :: ATECC508A.ecc_public_key()
-  def raw_public_key(public_key) do
-    {{:ECPoint, <<4, raw_key::64-bytes>>}, _} = public_key
+  @spec public_key_to_raw(X509.PublicKey.t()) :: ATECC508A.ecc_public_key()
+  def public_key_to_raw(public_key) do
+    {{:ECPoint, <<4, raw_key::64-bytes>>}, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}}} =
+      public_key
+
     raw_key
+  end
+
+  @doc """
+  Convert a raw public key bits to an X509 public key.
+  """
+  @spec raw_to_public_key(ATECC508A.ecc_public_key()) :: X509.PublicKey.t()
+  def raw_to_public_key(raw_key) do
+    {{:ECPoint, <<4, raw_key::64-bytes>>}, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}}}
   end
 
   # Helpers

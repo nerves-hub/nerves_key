@@ -40,7 +40,8 @@ defmodule NervesKey do
   def provision(transport, info, signer_cert, signer_key) do
     :ok = configure(transport)
     otp_info = OTP.new(info.board_name, info.manufacturer_sn)
-    :ok = OTP.write(transport, otp_info)
+    otp_data = OTP.to_raw(info)
+    # :ok = OTP.write(transport, otp)
     {:ok, device_public_key} = Data.genkey(transport)
     {:ok, device_sn} = Config.device_sn(transport)
 
@@ -54,6 +55,9 @@ defmodule NervesKey do
       )
 
     :ok = Data.write_certificates(transport, device_cert, signer_cert)
+
+    device_cert
+    # No turning back!!
     # :ok = Data.lock(transport)
   end
 end

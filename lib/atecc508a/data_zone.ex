@@ -44,7 +44,7 @@ defmodule ATECC508A.DataZone do
   Write a slot in the data zone.
 
   This uses 4 byte writes. These are only allowed under some conditions.
-  Most notably, 4-byte writes aren't allowed when the data zone is UNlocked.
+  Most notably, 4-byte writes aren't allowed when the data zone is UNLOCKED.
   """
   @spec write(Transport.t(), Request.slot(), binary()) :: :ok | {:error, atom()}
   def write(transport, slot, data) do
@@ -68,6 +68,19 @@ defmodule ATECC508A.DataZone do
     padded_data = data <> <<0::size(pad_count)-unit(8)>>
 
     do_write(transport, slot, 0, padded_data)
+  end
+
+  @doc """
+  Pad the specified data to the exact size of the slot.
+  """
+  @spec pad_to_slot_size(Request.slot(), binary()) :: binary()
+  def pad_to_slot_size(slot, data) do
+    to_pad = slot_size(slot) - byte_size(data)
+
+    cond do
+      to_pad == 0 -> data
+      to_pad > 0 -> <<data::binary, 0::unit(8)-size(to_pad)>>
+    end
   end
 
   defp check_data_size(slot, data) do
@@ -95,20 +108,20 @@ defmodule ATECC508A.DataZone do
     end
   end
 
-  # @doc """
-  # Lock the data zone.
+  @doc """
+  Lock the data and OTP zones.
 
-  # The expected contents concatenated together for the non-private key data slots and
-  # the OTP need to be passed for a CRC calculation. They are not
-  # written by design. The logic is that this is a final chance before it's too
-  # late to check that the device is programmed correctly.
-  # """
-  # @spec lock(Transport.t(), ATECC508A.crc16()) :: :ok | {:error, atom()}
-  # def lock(transport, expected_contents) do
-  #   crc = ATECC508A.CRC.crc(expected_contents)
+  The expected contents concatenated together for the non-private key data slots and
+  the OTP need to be passed for a CRC calculation. They are not
+  written by design. The logic is that this is a final chance before it's too
+  late to check that the device is programmed correctly.
+  """
+  @spec lock(Transport.t(), ATECC508A.crc16()) :: :ok | {:error, atom()}
+  def lock(transport, expected_contents) do
+    crc = ATECC508A.CRC.crc(expected_contents)
 
-  #   Request.lock_zone(transport, :data, crc)
-  # end
+    Request.lock_zone(transport, :data, crc)
+  end
 
   @doc """
   Return the size in bytes of the specified slot.

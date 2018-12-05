@@ -40,13 +40,10 @@ defmodule NervesKey.OTP do
   end
 
   @doc """
-  Write Nerves Key information to the OTP data.
+  Write Nerves Key information to the OTP zone.
   """
-  @spec write(Transport.t(), t()) :: :ok | {:error, atom()}
-  def write(transport, info) do
-    data = to_raw(info)
-    OTPZone.write(transport, data)
-  end
+  @spec write(Transport.t(), binary()) :: :ok | {:error, atom()}
+  defdelegate write(transport, data), to: OTPZone
 
   @doc """
   Convert a raw configuration to a nice map.

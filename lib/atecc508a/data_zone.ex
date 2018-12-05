@@ -64,8 +64,7 @@ defmodule ATECC508A.DataZone do
     check_data_size(slot, data)
 
     # pad the data up to a multiple of 32
-    pad_count = 32 - rem(byte_size(data), 32)
-    padded_data = data <> <<0::size(pad_count)-unit(8)>>
+    padded_data = pad_to_32(data)
 
     do_write(transport, slot, 0, padded_data)
   end
@@ -80,6 +79,23 @@ defmodule ATECC508A.DataZone do
     cond do
       to_pad == 0 -> data
       to_pad > 0 -> <<data::binary, 0::unit(8)-size(to_pad)>>
+    end
+  end
+
+  @doc """
+  Pad the passed in data to a multiple of 32-bytes
+
+  This is useful when 4-byte writes aren't allowed.
+  """
+  @spec pad_to_32(binary()) :: binary()
+  def pad_to_32(data) do
+    case rem(byte_size(data), 32) do
+      0 ->
+        data
+
+      fraction ->
+        pad_count = 32 - fraction
+        data <> <<0::size(pad_count)-unit(8)>>
     end
   end
 

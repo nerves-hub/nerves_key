@@ -26,4 +26,10 @@ defmodule ATECC508A.DataZoneTest do
     data = :crypto.strong_rand_bytes(36)
     assert DataZone.pad_to_slot_size(1, data) == data
   end
+
+  test "pad to 32-bytes" do
+    assert DataZone.pad_to_32(<<>>) == <<>>
+    assert DataZone.pad_to_32(<<1>>) == <<1, 0::size(31)-unit(8)>>
+    assert DataZone.pad_to_32(<<0::size(32)-unit(8)>>) == <<0::size(32)-unit(8)>>
+  end
 end

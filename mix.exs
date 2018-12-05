@@ -14,7 +14,7 @@ defmodule Atecc508a.MixProject do
       docs: [extras: ["README.md"], main: "readme"],
       deps: deps(),
       dialyzer: [
-        plt_add_apps: [:public_key, :asn1, :crypto],
+        plt_add_apps: [:public_key, :asn1, :crypto, :mix],
         ignore_warnings: "dialyzer.ignore-warnings"
       ]
     ]

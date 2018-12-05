@@ -3,19 +3,6 @@ defmodule NervesKey.Data do
   This module handles Data Zone data stored in the Nerves Key.
   """
 
-  # @doc """
-  # Read the device certificate
-  # """
-  # @spec read_device_certificate(Transport.t()) :: {:ok, X509.Certificate.t()} | {:error, atom()}
-  # def read_device_certificate(transport) do
-  #   with {:ok, compressed_cert} <- DataZone.read(transport, 10),
-  #        {:ok, public_key} <- Request.genkey(transport, 0, false),
-
-  #   do
-  #     cert = ATECC508A.Certificate.decompress(compressed_cert, public_key)
-  #   end
-  # end
-
   @doc """
   Create a public/private key pair
 
@@ -68,6 +55,8 @@ defmodule NervesKey.Data do
   @doc """
   Write all of the slots
   """
+  @spec write_slots(ATECC508A.Transport.t(), [{ATECC508A.Request.slot(), binary()}]) ::
+          :ok | {:error, atom()}
   def write_slots(transport, slot_data) do
     Enum.each(slot_data, fn {slot, data} ->
       :ok = ATECC508A.DataZone.write_padded(transport, slot, data)
@@ -79,7 +68,7 @@ defmodule NervesKey.Data do
 
   # There's no going back!
   # """
-  @spec lock(ATECC508A.Transport.t(), binary(), [{Request.slot(), binary()}]) ::
+  @spec lock(ATECC508A.Transport.t(), binary(), [{ATECC508A.Request.slot(), binary()}]) ::
           :ok | {:error, atom()}
   def lock(transport, otp_data, slot_data) do
     sorted_slot_data =

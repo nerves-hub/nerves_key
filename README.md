@@ -23,7 +23,7 @@ an EEPROM.
 
 Slot | Description                       | SlotConfig | KeyConfig | Primary properties
 -----|-----------------------------------|------------|-----------|-------------------
-0    | Device private key                | 8F 20      | 33 00     | Private key; lockable
+0    | Device private key                | 8F 20      | 33 00     | Private key, read only; lockable
 1    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
 2    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
 3    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
@@ -33,10 +33,10 @@ Slot | Description                       | SlotConfig | KeyConfig | Primary prop
 7    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
 8    | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
 9    | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
-10   | Device certificate                | 0F 0F      | 3C 00     | Clear read/write; lockable
-11   | Signer public key                 | 0F 0F      | 30 00     | P256; Clear read/write; lockable
-12   | Signer certificate                | 0F 0F      | 3C 00     | Clear read/write; lockable
-13   | Signer serial number*             | 0F 0F      | 3C 00     | Clear read/write; lockable
+10   | Device certificate                | 0F 2F      | 3C 00     | Clear read only; lockable
+11   | Signer public key                 | 0F 2F      | 30 00     | P256; Clear read only; lockable
+12   | Signer certificate                | 0F 2F      | 3C 00     | Clear read only; lockable
+13   | Signer serial number*             | 0F 2F      | 3C 00     | Clear read only; lockable
 14   | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
 15   | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
 

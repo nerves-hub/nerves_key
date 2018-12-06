@@ -23,7 +23,7 @@ an EEPROM.
 
 Slot | Description                       | SlotConfig | KeyConfig | Primary properties
 -----|-----------------------------------|------------|-----------|-------------------
-0    | Device private key                | 8F 20      | 33 00     | Private key, read only; lockable
+0    | Device private key                | 87 20      | 33 00     | Private key, read only; lockable
 1    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
 2    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
 3    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable

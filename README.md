@@ -2,9 +2,10 @@
 
 ## Device configuration
 
-See Table 2-5 in the ATECC508A data sheet for documentation on the configuration zone.
-This software expects the following configuration to be programmed (unspecified bytes
-are either not programmable or kept as their defaults):
+See Table 2-5 in the ATECC508A data sheet for documentation on the
+configuration zone.  This software expects the following configuration to be
+programmed (unspecified bytes are either not programmable or kept as their
+defaults):
 
 Bytes  | Name        | Value  | Description
 -------|-------------|--------|------------
@@ -16,10 +17,10 @@ Bytes  | Name        | Value  | Description
 92-95  | X509Format  | 00..00 | Unused
 96-127 | KeyConfig   | N/A    | See next table
 
-The slots will be programmed as follows. This definition is organized to be similar to
-the Microchip Standard TLS Configuration for the used slots to minimize changes to
-software. Unused slots are configured so that applications can use them as they would
-an EEPROM.
+The slots will be programmed as follows. This definition is organized to be
+similar to the Microchip Standard TLS Configuration for the used slots to
+minimize changes to software. Unused slots are configured so that applications
+can use them as they would an EEPROM.
 
 Slot | Description                       | SlotConfig | KeyConfig | Primary properties
 -----|-----------------------------------|------------|-----------|-------------------
@@ -36,15 +37,15 @@ Slot | Description                       | SlotConfig | KeyConfig | Primary prop
 10   | Device certificate                | 0F 2F      | 3C 00     | Clear read only; lockable
 11   | Signer public key                 | 0F 2F      | 30 00     | P256; Clear read only; lockable
 12   | Signer certificate                | 0F 2F      | 3C 00     | Clear read only; lockable
-13   | Signer serial number*             | 0F 2F      | 3C 00     | Clear read only; lockable
+13   | Signer serial number+             | 0F 2F      | 3C 00     | Clear read only; lockable
 14   | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
 15   | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
 
-* The signer serial number slot is currently unused since the signer's cert is computed from the
-  public key
++ The signer serial number slot is currently unused since the signer's cert is
+  computed from the public key
 
-The ATECC508A includes a 64 byte OTP (one-time programmable) memory. It has the following
-layout:
+The ATECC508A includes a 64 byte OTP (one-time programmable) memory. It has the
+following layout:
 
 Bytes  | Name              | Contents
 -------|-------------------|--------------------------

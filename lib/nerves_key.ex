@@ -59,7 +59,15 @@ defmodule NervesKey do
     :ok = Data.write_slots(transport, slot_data)
 
     # No turning back!!
+
     # :ok = Data.lock(transport, otp_data, slot_data)
-    {device_cert, otp_data, slot_data}
+    IO.puts(
+      "Skipping the call to Data.lock(transport, #{inspect(otp_data, limit: :infinity)}, #{
+        inspect(slot_data, limit: :infinity)
+      })"
+    )
+
+    IO.puts("The device certificate is #{inspect(device_cert, limit: :infinity)}")
+    :ok
   end
 end

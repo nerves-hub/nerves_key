@@ -1,6 +1,50 @@
-# ATECC508A
+# NervesKey
 
-## Device configuration
+[![CircleCI](https://circleci.com/gh/nerves-hub/nerves_key.svg?style=svg)](https://circleci.com/gh/nerves-hub/nerves_key)
+[![Hex version](https://img.shields.io/hexpm/v/nerves_key.svg "Hex version")](https://hex.pm/packages/nerves_key)
+
+The NervesKey is a configured [ATECC508A Crypto
+Authentication](https://www.microchip.com/wwwproducts/en/ATECC508A) chip that's
+used for authenticating devices with NervesHub and other cloud services. At a
+high level, it is simple HSM that protects one private key by requiring all
+operations on that key to occur inside chip. The project provides access to the
+chip from Elixir and makes configuration decisions to make working with the
+device easier. It has the following features:
+
+1. Provision blank ATECC508A devices - this includes private key generation
+2. Storage for serial number and one-time calibration data (useful if primary
+   storage is on a removable MicroSD card)
+3. Support for Microchip's compressed X.509 certificate format for interop with
+   C libraries
+4. Support for signing device certificates so that devices can be included in a
+   PKI
+5. Support for storing a small amount of run-time configuration in unused data
+   slots
+
+It cannot be stressed enough that if you are provisioning ATECC508A or ATECC608A
+chips with this library that you keep in mind that the chips are essentially
+one-time programmable. The methods to provision the chip lock the configuration,
+OTP, and data portions of the chip are very easy to call, but there's no
+going back.
+
+## Installation
+
+If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+by adding `nerves_key` to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [
+    {:nerves_key, "~> 0.1.0"}
+  ]
+end
+```
+
+Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
+and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
+be found at [https://hexdocs.pm/nerves_key](https://hexdocs.pm/nerves_key).
+
+## ATECC508A device configuration
 
 See Table 2-5 in the ATECC508A data sheet for documentation on the
 configuration zone.  This software expects the following configuration to be
@@ -54,20 +98,3 @@ Bytes  | Name              | Contents
 6-15   | Board name        | 10 byte name for the board in ASCII (set unused bytes to 0)
 16-31  | Mfg serial number | 16 byte manufacturer-assigned serial number in ASCII (set unused bytes to 0)
 32-63  | User              | These are unassigned
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `atecc508a` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:atecc508a, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/atecc508a](https://hexdocs.pm/atecc508a).

@@ -6,6 +6,8 @@ defmodule NervesKey do
 
   alias NervesKey.{Config, OTP, Data}
 
+  @build_year DateTime.utc_now().year
+
   @doc """
   Configure an ATECC508A or ATECC608A as a Nerves Key.
   """
@@ -38,6 +40,8 @@ defmodule NervesKey do
           X509.PrivateKey.t()
         ) :: :ok
   def provision(transport, info, signer_cert, signer_key) do
+    check_time()
+
     :ok = configure(transport)
     otp_info = OTP.new(info.board_name, info.manufacturer_sn)
     otp_data = OTP.to_raw(otp_info)
@@ -69,5 +73,14 @@ defmodule NervesKey do
 
     IO.puts("The device certificate is #{inspect(device_cert, limit: :infinity)}")
     :ok
+  end
+
+  defp check_time() do
+    unless DateTime.utc_now().year >= @build_year do
+      raise """
+      It doesn't look like the clock has been set. Check that `nerves_time` is running
+      or something else is providing time.
+      """
+    end
   end
 end

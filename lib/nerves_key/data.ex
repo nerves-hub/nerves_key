@@ -23,11 +23,17 @@ defmodule NervesKey.Data do
           {ATECC508A.Request.slot(), binary()}
         ]
   def slot_data(device_sn, device_cert, signer_cert) do
-    device_template = ATECC508A.Certificate.Template.device(device_sn)
-    device_compressed = ATECC508A.Certificate.compress(device_cert, device_template)
+    signer_template =
+      signer_cert
+      |> X509.Certificate.public_key()
+      |> ATECC508A.Certificate.Template.signer()
 
-    signer_template = ATECC508A.Certificate.Template.signer()
     signer_compressed = ATECC508A.Certificate.compress(signer_cert, signer_template)
+
+    device_template =
+      ATECC508A.Certificate.Template.device(device_sn, signer_compressed.public_key)
+
+    device_compressed = ATECC508A.Certificate.compress(device_cert, device_template)
 
     # See README.md for slot contents. We still need to program unused slots in order
     # to lock the device so specify nothing so they'll get padded with zeros to the

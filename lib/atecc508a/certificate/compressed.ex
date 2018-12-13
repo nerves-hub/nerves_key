@@ -22,7 +22,6 @@ defmodule ATECC508A.Certificate.Compressed do
     :serial_number,
     :subject_rdn,
     :issuer_rdn,
-    :extensions,
     :template
   ]
 
@@ -33,7 +32,6 @@ defmodule ATECC508A.Certificate.Compressed do
           serial_number: binary() | nil,
           subject_rdn: String.t() | X509.RDNSequence.t(),
           issuer_rdn: String.t() | X509.RDNSequence.t(),
-          extensions: [X509.Certificate.Extension.t()],
-          template: ATECC508A.Certificate.Template
+          template: ATECC508A.Certificate.Template.t()
         }
 end

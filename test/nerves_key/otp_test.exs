@@ -13,7 +13,7 @@ defmodule NervesKey.OTPTest do
   }
 
   test "to raw and back" do
-    raw_and_back = @test_data |> OTP.to_raw() |> OTP.from_raw()
+    raw_and_back = @test_data |> OTP.to_raw() |> OTP.from_raw!()
     assert raw_and_back == @test_data
   end
 

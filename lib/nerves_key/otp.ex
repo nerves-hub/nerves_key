@@ -53,15 +53,25 @@ defmodule NervesKey.OTP do
         <<@magic::binary(), flags::size(16), board_name::10-bytes, manufacturer_sn::16-bytes,
           user::32-bytes>>
       ) do
-    %__MODULE__{
-      flags: flags,
-      board_name: Util.trim_zeros(board_name),
-      manufacturer_sn: Util.trim_zeros(manufacturer_sn),
-      user: user
-    }
+    {:ok,
+     %__MODULE__{
+       flags: flags,
+       board_name: Util.trim_zeros(board_name),
+       manufacturer_sn: Util.trim_zeros(manufacturer_sn),
+       user: user
+     }}
   end
 
   def from_raw(_other), do: {:error, :not_nerves_key}
+
+  @doc """
+  Convert a raw configuration to a nice map. Raise if there is an error.
+  """
+  @spec from_raw!(<<_::512>>) :: t() | no_return()
+  def from_raw!(raw) do
+    {:ok, raw} = from_raw(raw)
+    raw
+  end
 
   @doc """
   Convert a nice config map back to a raw configuration

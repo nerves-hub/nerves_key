@@ -98,3 +98,32 @@ Bytes  | Name              | Contents
 6-15   | Board name        | 10 byte name for the board in ASCII (set unused bytes to 0)
 16-31  | Mfg serial number | 16 byte manufacturer-assigned serial number in ASCII (set unused bytes to 0)
 32-63  | User              | These are unassigned
+
+## Provisioning
+
+The ATECC508A needs to be provisioned before it can be used for the first time.
+This step initializes the ATECC508A configuration, creates a new device certificate,
+and locks the one time programmable memory. Provisioning will require the following
+parameters
+
+  * manufacturer_sn - The serial number of the device
+  * board_name - A string identifier of the version of the hardware board
+  * signer_cert - The CA certificate to sign the device certificate
+  * signer_key - The private key for the signer_cert
+
+Provisioning needs to happen at runtime since the process requires communication
+with the ATECC508A. In the following example, we are reading the signer certificate
+and key from files on the disk. These files were moved onto the device
+prior to running this routine.
+
+```elixir
+signer_cert = File.read!("/root/signer.cert")
+signer_key = File.read!("/root/signer.key")
+
+manufacturer_sn = "1234"
+board_name = "NervesKey"
+
+{:ok, i2c} = ATECC508A.Transport.I2C.init([])
+provision_info = %NervesKey.ProvisioningInfo{manufacturer_sn: manufacturer_sn, board_name: board_name}
+{:ok, _device_cert} = NervesKey.provision(i2c, provision_info, signer_cert, signer_key)
+```

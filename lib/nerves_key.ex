@@ -29,6 +29,31 @@ defmodule NervesKey do
   end
 
   @doc """
+  Read the device certificate from the slot
+  """
+  @spec device_cert(ATECC508A.Transport.t()) :: X509.Certificate.t()
+  def device_cert(transport) do
+    {:ok, device_sn} = Config.device_sn(transport)
+    {:ok, device_data} = ATECC508A.DataZone.read(transport, 10)
+    {:ok, signer_public_key} = ATECC508A.DataZone.read(transport, 11)
+    {:ok, %OTP{manufacturer_sn: serial_number}} = OTP.read(transport)
+    {:ok, raw_public_key} = ATECC508A.Request.genkey(transport, 0, false)
+    template = ATECC508A.Certificate.Template.device(device_sn, signer_public_key)
+
+    compressed = %ATECC508A.Certificate.Compressed{
+      data: device_data,
+      device_sn: device_sn,
+      serial_number: serial_number,
+      public_key: raw_public_key,
+      template: template,
+      issuer_rdn: "/CN=Signer",
+      subject_rdn: "/CN=" <> device_sn
+    }
+
+    ATECC508A.Certificate.decompress(compressed)
+  end
+
+  @doc """
   Provision a NervesKey in one step
 
   This function does it all, but it requires the signer's private key.

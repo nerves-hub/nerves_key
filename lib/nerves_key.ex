@@ -45,7 +45,8 @@ defmodule NervesKey do
     :ok = configure(transport)
     otp_info = OTP.new(info.board_name, info.manufacturer_sn)
     otp_data = OTP.to_raw(otp_info)
-    # :ok = OTP.write(transport, otp)
+    :ok = OTP.write(transport, otp_data)
+
     {:ok, device_public_key} = Data.genkey(transport)
     {:ok, device_sn} = Config.device_sn(transport)
 
@@ -64,15 +65,7 @@ defmodule NervesKey do
 
     # No turning back!!
 
-    # :ok = Data.lock(transport, otp_data, slot_data)
-    IO.puts(
-      "Skipping the call to Data.lock(transport, #{inspect(otp_data, limit: :infinity)}, #{
-        inspect(slot_data, limit: :infinity)
-      })"
-    )
-
-    IO.puts("The device certificate is #{inspect(device_cert, limit: :infinity)}")
-    :ok
+    :ok = Data.lock(transport, otp_data, slot_data)
   end
 
   defp check_time() do

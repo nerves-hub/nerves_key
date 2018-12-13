@@ -44,6 +44,7 @@ jobs:
             - v1-mix-cache-{{ checksum "mix.lock" }}
       - run: mix deps.get
       - run: mix format --check-formatted
+      - run: mix hex.build
       - run: mix test
       - run: mix docs
       - run: mix dialyzer --halt-exit-status

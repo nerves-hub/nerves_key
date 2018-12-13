@@ -43,11 +43,9 @@ defmodule NervesKey.MixProject do
 
   defp deps do
     [
-      {:x509, "~> 0.5"},
-      {:circuits_i2c, "~> 0.2"},
+      {:atecc508a, github: "nerves-hub/atecc508a"},
       {:ex_doc, "~> 0.11", only: :dev, runtime: false},
-      {:dialyxir, "1.0.0-rc.4", only: :dev, runtime: false},
-      {:mox, "~> 0.4", only: :test}
+      {:dialyxir, "1.0.0-rc.4", only: :dev, runtime: false}
     ]
   end
 end

@@ -43,7 +43,7 @@ defmodule NervesKey.MixProject do
 
   defp deps do
     [
-      {:atecc508a, github: "nerves-hub/atecc508a"},
+      {:atecc508a, "~> 0.1"},
       {:ex_doc, "~> 0.11", only: :dev, runtime: false},
       {:dialyxir, "1.0.0-rc.4", only: :dev, runtime: false}
     ]

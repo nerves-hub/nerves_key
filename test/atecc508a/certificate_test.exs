@@ -19,9 +19,13 @@ defmodule ATECC508A.CertificateTest do
 
   test "signer certs can be compressed" do
     {signer_cert, _signer_key} = ATECC508A.Certificate.new_signer(1)
+    signer_public_key = X509.Certificate.public_key(signer_cert)
 
     compressed_cert =
-      ATECC508A.Certificate.compress(signer_cert, ATECC508A.Certificate.Template.signer())
+      ATECC508A.Certificate.compress(
+        signer_cert,
+        ATECC508A.Certificate.Template.signer(signer_public_key)
+      )
 
     decompressed_cert = ATECC508A.Certificate.decompress(compressed_cert)
 
@@ -65,8 +69,13 @@ defmodule ATECC508A.CertificateTest do
         signer_key
       )
 
+    signer_public_key = X509.Certificate.public_key(signer)
+
     compressed =
-      ATECC508A.Certificate.compress(otp_cert, ATECC508A.Certificate.Template.device(ecc508a_sn))
+      ATECC508A.Certificate.compress(
+        otp_cert,
+        ATECC508A.Certificate.Template.device(ecc508a_sn, signer_public_key)
+      )
 
     assert byte_size(compressed.data) == 72
     assert compressed.device_sn == ecc508a_sn
@@ -86,8 +95,13 @@ defmodule ATECC508A.CertificateTest do
         signer_key
       )
 
+    signer_public_key = X509.Certificate.public_key(signer)
+
     compressed =
-      ATECC508A.Certificate.compress(otp_cert, ATECC508A.Certificate.Template.device(ecc508a_sn))
+      ATECC508A.Certificate.compress(
+        otp_cert,
+        ATECC508A.Certificate.Template.device(ecc508a_sn, signer_public_key)
+      )
 
     decompressed = ATECC508A.Certificate.decompress(compressed)
 

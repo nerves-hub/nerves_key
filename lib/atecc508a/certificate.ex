@@ -155,7 +155,6 @@ defmodule ATECC508A.Certificate do
       serial_number: X509.Certificate.serial(cert),
       subject_rdn: X509.Certificate.subject(cert),
       issuer_rdn: X509.Certificate.issuer(cert),
-      extensions: X509.Certificate.extensions(cert),
       template: template
     }
   end
@@ -206,7 +205,7 @@ defmodule ATECC508A.Certificate do
             name when is_binary(name) -> RDNSequence.new(name, :otp)
           end,
         subjectPublicKeyInfo: PublicKey.wrap(subject_public_key, :OTPSubjectPublicKeyInfo),
-        extensions: compressed.extensions
+        extensions: template.extensions
       )
 
     otp_certificate(

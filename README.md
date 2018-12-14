@@ -62,13 +62,13 @@ and key from files on the disk. These files were moved onto the device
 prior to running this routine.
 
 ```elixir
-signer_cert = File.read!("/root/signer.cert")
-signer_key = File.read!("/root/signer.key")
+signer_cert = File.read!("/root/signer.cert") |> X509.Certificate.from_pem!
+signer_key = File.read!("/root/signer.key") |> X509.PrivateKey.from_pem!()
 
 manufacturer_sn = "1234"
 board_name = "NervesKey"
 
 {:ok, i2c} = ATECC508A.Transport.I2C.init([])
 provision_info = %NervesKey.ProvisioningInfo{manufacturer_sn: manufacturer_sn, board_name: board_name}
-{:ok, _device_cert} = NervesKey.provision(i2c, provision_info, signer_cert, signer_key)
+:ok = NervesKey.provision(i2c, provision_info, signer_cert, signer_key)
 ```

@@ -4,7 +4,7 @@ defmodule NervesKey.MixProject do
   def project do
     [
       app: :nerves_key,
-      version: "0.1.0",
+      version: "0.1.1",
       description: description(),
       package: package(),
       source_url: "https://github.com/nerves-hub/nerves_key",

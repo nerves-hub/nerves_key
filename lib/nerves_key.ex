@@ -35,19 +35,23 @@ defmodule NervesKey do
   def device_cert(transport) do
     {:ok, device_sn} = Config.device_sn(transport)
     {:ok, device_data} = ATECC508A.DataZone.read(transport, 10)
-    {:ok, signer_public_key} = ATECC508A.DataZone.read(transport, 11)
+
+    {:ok, <<signer_public_key_raw::64-bytes, _pad::8-bytes>>} =
+      ATECC508A.DataZone.read(transport, 11)
+
+    signer_public_key = ATECC508A.Certificate.raw_to_public_key(signer_public_key_raw)
     {:ok, %OTP{manufacturer_sn: serial_number}} = OTP.read(transport)
-    {:ok, raw_public_key} = ATECC508A.Request.genkey(transport, 0, false)
-    template = ATECC508A.Certificate.Template.device(device_sn, signer_public_key)
+    {:ok, public_key_raw} = ATECC508A.Request.genkey(transport, 0, false)
+
+    template = ATECC508A.Certificate.Template.device(serial_number, signer_public_key)
 
     compressed = %ATECC508A.Certificate.Compressed{
       data: device_data,
       device_sn: device_sn,
-      serial_number: serial_number,
-      public_key: raw_public_key,
+      public_key: public_key_raw,
       template: template,
-      issuer_rdn: "/CN=Signer",
-      subject_rdn: "/CN=" <> device_sn
+      issuer_rdn: X509.RDNSequence.new("/CN=Signer", :otp),
+      subject_rdn: X509.RDNSequence.new("/CN=" <> serial_number, :otp)
     }
 
     ATECC508A.Certificate.decompress(compressed)
@@ -59,15 +63,19 @@ defmodule NervesKey do
   @spec signer_cert(ATECC508A.Transport.t()) :: X509.Certificate.t()
   def signer_cert(transport) do
     {:ok, signer_data} = ATECC508A.DataZone.read(transport, 12)
-    {:ok, signer_public_key} = ATECC508A.DataZone.read(transport, 11)
+
+    {:ok, <<signer_public_key_raw::64-bytes, _pad::8-bytes>>} =
+      ATECC508A.DataZone.read(transport, 11)
+
+    signer_public_key = ATECC508A.Certificate.raw_to_public_key(signer_public_key_raw)
     template = ATECC508A.Certificate.Template.signer(signer_public_key)
 
     compressed = %ATECC508A.Certificate.Compressed{
       data: signer_data,
-      public_key: signer_public_key,
+      public_key: signer_public_key_raw,
       template: template,
-      issuer_rdn: "/CN=Signer",
-      subject_rdn: "/CN=Signer"
+      issuer_rdn: X509.RDNSequence.new("/CN=Signer", :otp),
+      subject_rdn: X509.RDNSequence.new("/CN=Signer", :otp)
     }
 
     ATECC508A.Certificate.decompress(compressed)

@@ -116,9 +116,15 @@ defmodule NervesKey do
 
     :ok = Data.write_slots(transport, slot_data)
 
-    # No turning back!!
+    # This is the point of no return!!
 
+    # Lock the data and OTP zones
     :ok = Data.lock(transport, otp_data, slot_data)
+
+    # Lock the slot that contains the private key to prevent calls to GenKey
+    # from changing it. See datasheet for how GenKey doesn't check the zone
+    # lock.
+    :ok = ATECC508A.Request.lock_slot(transport, 0)
   end
 
   defp check_time() do

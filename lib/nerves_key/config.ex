@@ -74,7 +74,7 @@ defmodule NervesKey.Config do
 
   # See the README.md for an easier-to-view version of what bytes matter
   defp slot_config_compatible(
-         <<0x8F, 0x20, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 0x0F, 0x0F, 0x0F,
+         <<0x87, 0x20, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 0x0F, 0x0F, 0x0F,
            0x0F, 0x0F, 0x0F, 0x0F, 0x0F, _, _, _, _>>
        ),
        do: true

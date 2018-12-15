@@ -51,10 +51,10 @@ This step initializes the ATECC508A configuration, creates a new device certific
 and locks the one time programmable memory. Provisioning will require the following
 parameters
 
-  * manufacturer_sn - The serial number of the device
-  * board_name - A string identifier of the version of the hardware board
-  * signer_cert - The CA certificate to sign the device certificate
-  * signer_key - The private key for the signer_cert
+* manufacturer_sn - The serial number of the device
+* board_name - A string identifier of the version of the hardware board
+* signer_cert - The CA certificate to sign the device certificate
+* signer_key - The private key for the signer_cert
 
 Provisioning needs to happen at runtime since the process requires communication
 with the ATECC508A. In the following example, we are reading the signer certificate

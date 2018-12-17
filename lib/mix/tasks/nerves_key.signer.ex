@@ -8,7 +8,9 @@ defmodule Mix.Tasks.NervesKey.Signer do
 
   ## create
 
-  Create a new NervesKey signing key pair with the specified name
+  Create a new NervesKey signing certificate and private key pair.  This
+  creates a compressable X.509 certificate that can be stored in the
+  ATECC508A's limited memory.
 
     mix nerves_key.signer create NAME
 
@@ -30,7 +32,7 @@ defmodule Mix.Tasks.NervesKey.Signer do
 
   @spec usage() :: no_return()
   def usage() do
-    Mix.shell().raise("""
+    Mix.raise("""
     Invalid arguments to `mix nerves_key.signer`.
 
     Usage:
@@ -42,13 +44,31 @@ defmodule Mix.Tasks.NervesKey.Signer do
 
   @spec create(String.t(), keyword()) :: :ok
   def create(name, _opts) do
+    cert_path = name <> ".cert"
+    key_path = name <> ".key"
+
+    if File.exists?(cert_path) do
+      Mix.raise("Refusing to overwrite #{cert_path}. Please remove or change the name")
+    end
+
+    if File.exists?(key_path) do
+      Mix.raise("Refusing to overwrite #{key_path}. Please remove or change the name")
+    end
+
     {cert, priv_key} = NervesKey.create_signing_key_pair()
     pem_cert = X509.Certificate.to_pem(cert)
     pem_key = X509.PrivateKey.to_pem(priv_key)
 
-    File.write!(name <> ".cert", pem_cert)
-    File.write!(name <> ".key", pem_key)
+    File.write!(cert_path, pem_cert)
+    File.write!(key_path, pem_key)
 
-    Mix.shell().info("Created signing cert and private key.")
+    Mix.shell().info("""
+    Created signing cert, #{cert_path} and private key, #{key_path}.
+
+    Please store #{key_path} in a safe place.
+
+    #{cert_path} is ready to be uploaded to the servers that need
+    to authenticate devices signed by the private key.
+    """)
   end
 end

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.2
+
+* Bug fixes
+  * Lock the private key slot so that a genkey can't replace its contents
+
 ## v0.1.1
 
 * Bug fixes

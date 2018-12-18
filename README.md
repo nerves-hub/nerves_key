@@ -114,27 +114,35 @@ $ sftp nerves.local
 Connected to nerves.local.
 sftp> cd /tmp
 sftp> put nerveskey_prod_signer1.*
-cert and private key, nerveskey_prod_signer1.key
 Uploading nerveskey_prod_signer1.cert to /tmp/nerveskey_prod_signer1.cert
-nerveskey_prod_signer1.cert                                              100%  840    78.3KB/s   00:00
+nerveskey_prod_signer1.cert                                              100%  636    78.3KB/s   00:00
 Uploading nerveskey_prod_signer1.key to /tmp/nerveskey_prod_signer1.key
-nerveskey_prod_signer1.key                                               100%  840    78.3KB/s   00:00
+nerveskey_prod_signer1.key                                               100%  228    78.3KB/s   00:00
 sftp> exit
 ```
 
 Next, go to the IEx prompt on the device and run the following:
 
 ```elixir
-signer_cert = File.read!("/tmp/nerveskey_prod_signer1.cert") |> X509.Certificate.from_pem!
-signer_key = File.read!("/tmp/nerveskey_prod_signer1.key") |> X509.PrivateKey.from_pem!()
-
+# Customize these
+cert_name="nerveskey_prod_signer1"
 manufacturer_sn = "NK-1234"
 board_name = "NervesKey"
 
+# These lines should be copy/paste
+signer_cert = File.read!("/tmp/#{cert_name}.cert") |> X509.Certificate.from_pem!;true
+signer_key = File.read!("/tmp/#{cert_name}.key") |> X509.PrivateKey.from_pem!();true
+
 {:ok, i2c} = ATECC508A.Transport.I2C.init([])
 provision_info = %NervesKey.ProvisioningInfo{manufacturer_sn: manufacturer_sn, board_name: board_name}
-:ok = NervesKey.provision(i2c, provision_info, signer_cert, signer_key)
+
+# Double-check what you typed above before running this
+NervesKey.provision(i2c, provision_info, signer_cert, signer_key)
 ```
+
+If the last line returns `:ok` after about 2 seconds, then celebrate. You
+successfully programmed a NervesKey. You can't program it again. If you try,
+you'll get an error.
 
 ## Support
 

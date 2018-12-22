@@ -22,14 +22,23 @@ defmodule NervesKey do
   @doc """
   Create a signing key pair
 
-  This returns a tuple that contains the certificate and the private key.
+  This returns a tuple that contains a new signer certificate and private key.
+  It is compatible with the ATECC508A certificate compression.
+
+  Options:
+
+  * :years_valid - how many years this signing key is valid for
   """
-  def create_signing_key_pair() do
-    ATECC508A.Certificate.new_signer(1)
+  @spec create_signing_key_pair(keyword()) :: {X509.Certificate.t(), X509.PrivateKey.t()}
+  def create_signing_key_pair(opts \\ []) do
+    years_valid = Keyword.get(opts, :years_valid, 1)
+    ATECC508A.Certificate.new_signer(years_valid)
   end
 
   @doc """
   Read the device certificate from the slot
+
+  The device must be programmed for this to work.
   """
   @spec device_cert(ATECC508A.Transport.t()) :: X509.Certificate.t()
   def device_cert(transport) do

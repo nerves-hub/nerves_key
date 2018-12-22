@@ -36,6 +36,15 @@ defmodule NervesKey do
   end
 
   @doc """
+  Read the manufacturer's serial number
+  """
+  @spec manufacturer_sn(ATECC508A.Transport.t()) :: binary()
+  def manufacturer_sn(transport) do
+    {:ok, %OTP{manufacturer_sn: serial_number}} = OTP.read(transport)
+    serial_number
+  end
+
+  @doc """
   Read the device certificate from the slot
 
   The device must be programmed for this to work.

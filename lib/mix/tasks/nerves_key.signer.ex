@@ -9,14 +9,16 @@ defmodule Mix.Tasks.NervesKey.Signer do
   ## create
 
   Create a new NervesKey signing certificate and private key pair.  This
-  creates a compressable X.509 certificate that can be stored in the
+  creates a compressible X.509 certificate that can be stored in the
   ATECC508A's limited memory.
 
-    mix nerves_key.signer create NAME
+    mix nerves_key.signer create NAME --years-valid <YEARS>
 
+  If --years-valid is unspecified, the new certificate will be valid for
+  one year.
   """
 
-  @switches []
+  @switches [years_valid: :integer]
 
   def run(args) do
     {opts, args} = OptionParser.parse!(args, strict: @switches)
@@ -36,14 +38,14 @@ defmodule Mix.Tasks.NervesKey.Signer do
     Invalid arguments to `mix nerves_key.signer`.
 
     Usage:
-      mix nerves_key.key create NAME
+      mix nerves_key.key create NAME --years-valid <YEARS>
 
     Run `mix help nerves_key.signer` for more information.
     """)
   end
 
   @spec create(String.t(), keyword()) :: :ok
-  def create(name, _opts) do
+  def create(name, opts) do
     cert_path = name <> ".cert"
     key_path = name <> ".key"
 
@@ -55,7 +57,7 @@ defmodule Mix.Tasks.NervesKey.Signer do
       Mix.raise("Refusing to overwrite #{key_path}. Please remove or change the name")
     end
 
-    {cert, priv_key} = NervesKey.create_signing_key_pair()
+    {cert, priv_key} = NervesKey.create_signing_key_pair(opts)
     pem_cert = X509.Certificate.to_pem(cert)
     pem_key = X509.PrivateKey.to_pem(priv_key)
 

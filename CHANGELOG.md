@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.0
+
+* New features
+  * Support setting signer key expiration dates
+  * Add a convenience method for getting the manufacturing serial number
+
+* Bug fixes
+  * Fixed configuration compatibility checking - Thanks to Peter Marks for this
+    fix.
+
 ## v0.1.2
 
 * Bug fixes

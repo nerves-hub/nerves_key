@@ -26,6 +26,8 @@ chips with this library that you keep in mind that the chips are essentially
 one-time programmable. Mistakes are corrected by replacing the chip or the
 entire NervesKey.
 
+See the [hw](hw) folder for hardware design files.
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed

@@ -9,14 +9,14 @@ defmodule NervesKey do
   @build_year DateTime.utc_now().year
 
   @doc """
-  Configure an ATECC508A or ATECC608A as a Nerves Key.
+  Check whether the NervesKey has been provisioned
   """
-  def configure(transport) do
-    cond do
-      Config.config_compatible?(transport) == {:ok, true} -> :ok
-      Config.configured?(transport) == {:ok, true} -> {:error, :config_locked}
-      true -> Config.configure(transport)
-    end
+  @spec provisioned?(ATECC508A.Transport.t()) :: boolean()
+  def provisioned?(transport) do
+    {:ok, config} = ATECC508A.Configuration.read(transport)
+
+    # If the OTP and data sections are locked, then this chip has been provisioned.
+    config.lock_value == 0
   end
 
   @doc """
@@ -143,6 +143,20 @@ defmodule NervesKey do
     # from changing it. See datasheet for how GenKey doesn't check the zone
     # lock.
     :ok = ATECC508A.Request.lock_slot(transport, 0)
+  end
+
+  # Configure an ATECC508A or ATECC608A as a NervesKey.
+  #
+  # This is called from `provision/4`. It can be called multiple
+  # times and so long as the part is configured in a compatible
+  # way, then it succeeds. This is needed to recover from failures
+  # in the provisioning process.
+  defp configure(transport) do
+    cond do
+      Config.config_compatible?(transport) == {:ok, true} -> :ok
+      Config.configured?(transport) == {:ok, true} -> {:error, :config_locked}
+      true -> Config.configure(transport)
+    end
   end
 
   defp check_time() do

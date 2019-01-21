@@ -1,6 +1,6 @@
 defmodule NervesKey.OTP do
   @moduledoc """
-  This module handles OTP data stored in the Nerves Key.
+  This module handles OTP data stored in the NervesKey.
   """
 
   alias ATECC508A.{OTPZone, Transport, Util}
@@ -22,7 +22,7 @@ defmodule NervesKey.OTP do
         }
 
   @doc """
-  Create a Nerves Key OTP data struct
+  Create a NervesKey OTP data struct
   """
   @spec new(String.t(), String.t(), binary()) :: t()
   def new(board_name, manufacturer_sn, user \\ <<0::size(256)>>) do
@@ -30,7 +30,7 @@ defmodule NervesKey.OTP do
   end
 
   @doc """
-  Read Nerves Key information from the OTP data.
+  Read NervesKey information from the OTP data.
   """
   @spec read(Transport.t()) :: {:ok, t()} | {:error, atom()}
   def read(transport) do
@@ -40,7 +40,7 @@ defmodule NervesKey.OTP do
   end
 
   @doc """
-  Write Nerves Key information to the OTP zone.
+  Write NervesKey information to the OTP zone.
   """
   @spec write(Transport.t(), binary()) :: :ok | {:error, atom()}
   defdelegate write(transport, data), to: OTPZone

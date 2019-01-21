@@ -1,6 +1,6 @@
 defmodule NervesKey.Config do
   @moduledoc """
-  This is a high level interface to provisioning and using the Nerves Key
+  This is a high level interface to provisioning and using the NervesKey
   or any ATECC508A/608A that can be configured similarly.
   """
 
@@ -16,7 +16,7 @@ defmodule NervesKey.Config do
                  0x0F, 0x2F, 0x0F, 0x0F, 0x0F, 0x0F>>
 
   @doc """
-  Configure an ATECC508A or ATECC608A as a Nerves Key.
+  Configure an ATECC508A or ATECC608A as a NervesKey.
 
   This can only be called once. Subsequent calls will fail.
   """
@@ -58,8 +58,8 @@ defmodule NervesKey.Config do
   end
 
   @doc """
-  Check if the chip's configuration is compatible with the Nerves Key. This only checks
-  what's important for the Nerves Key.
+  Check if the chip's configuration is compatible with the NervesKey. This only checks
+  what's important for the NervesKey.
   """
   @spec config_compatible?(ATECC508A.Transport.t()) :: {:error, atom()} | {:ok, boolean()}
   def config_compatible?(transport) do

@@ -1,13 +1,13 @@
 # Hardware
 
-The Nerves Key is a provisioned ATECC508A or ATECC608A. Both chips are
+The NervesKey is a provisioned ATECC508A or ATECC608A. Both chips are
 relatively inexpensive additions to devices that attach to an I2C bus. This
 directory contains circuit board designs to add an ATECC508A/608A to Raspberry
 Pis.
 
 ## 5-pin bottom solderable module
 
-![NervesKey bottom](proto4/nerves_key_bottom.jpg "Nerves Key bottom mount")
+![NervesKey bottom](proto4/nerves_key_bottom.jpg "NervesKey bottom mount")
 
 The `proto4` directory is a hand solderable module that can be mounted
 underneath the Raspberry Pi or connected "upside down" to the top.
@@ -20,7 +20,7 @@ Parts:
 
 See the [proto4](proto4) directory for Eagle files.
 
-## Nerves Key shim
+## NervesKey shim
 
 ![NervesKey shim](shim/nerves_key_shim1.png) ![NervesKey shim](shim/nerves_key_shim2.png)
 

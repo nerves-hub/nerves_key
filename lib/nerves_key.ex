@@ -1,6 +1,6 @@
 defmodule NervesKey do
   @moduledoc """
-  This is a high level interface to provisioning and using the Nerves Key
+  This is a high level interface to provisioning and using the NervesKey
   or any ATECC508A/608A that can be configured similarly.
   """
 

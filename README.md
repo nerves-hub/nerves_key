@@ -11,7 +11,7 @@ operations on that key to occur inside chip. The project provides access to the
 chip from Elixir and makes configuration decisions to make working with the
 device easier. It has the following features:
 
-1. Provision blank ATECC508A devices - this includes private key generation
+1. Provision blank ATECC508A/608A devices - this includes private key generation
 2. Storage for serial number and one-time calibration data (useful if primary
    storage is on a removable MicroSD card)
 3. Support for Microchip's compressed X.509 certificate format for interop with
@@ -23,10 +23,10 @@ device easier. It has the following features:
 6. Support auxillary device/signer certificate storage to support pre-production
    experimentation without needing to lock down certificates
 
-It cannot be stressed enough that the NervesKey library locks down the ATECC508A
-or ATECC608A during the provisioning process. This is a feature and is required
-for normal operation, but if you're getting started, make sure that you have a
-few extra parts just in case.
+It cannot be stressed enough that the NervesKey library locks down the
+ATECC508A/608A during the provisioning process. This is a feature and is
+required for normal operation, but if you're getting started, make sure that you
+have a few extra parts just in case.
 
 See the [hw](hw) folder for hardware design files.
 
@@ -54,7 +54,7 @@ step that could already have been done for you. If not, see subsequent sections
 for how that works.
 
 To use any of the NervesKey APIs, you will need a "transport" to communicate
-with the ATECC508A or ATECC608A that's doing all of the work. Currently the only
+with the ATECC508A/608A that's doing all of the work. Currently the only
 supported transport is I2C. The following line would be run on your Nerves
 device (like a Raspberry Pi, BeagleBone or your own custom hardware):
 
@@ -84,10 +84,10 @@ iex> NervesKey.manufacturer_sn(i2c)
 
 Of course, the more interesting part of the NervesKeys are its storage of device
 private keys and their certificates. For the common case, it stores two X.509
-certificates: one for the device and one for the certificate that signed the device
-certificate. The signer certificate is usually uploaded to the servers that the
-device will connect to so that it can authenticate the device. Here's how
-to get both of the certificates:
+certificates: one for the device and one for the certificate that signed the
+device certificate. The signer certificate is usually uploaded to the servers
+that the device will connect to so that it can authenticate the device. Here's
+how to get both of the certificates:
 
 ```elixir
 iex> NervesKey.device_cert(i2c)
@@ -106,8 +106,9 @@ iex> NervesKey.signer_cert(i2c)
 ```
 
 The next step is to tell Erlang's SSL library that you want to use the NervesKey
-when connecting to the server. For that, you'll need [nerves_key_pkcs11](https://github.com/nerves-hub/nerves_key_pkcs11). This code is somewhat tedious
-but hopefully the following code fragment will help:
+when connecting to the server. For that, you'll need
+[nerves_key_pkcs11](https://github.com/nerves-hub/nerves_key_pkcs11). This code
+is somewhat tedious but hopefully the following code fragment will help:
 
 ```elixir
    {:ok, engine} = NervesKey.PKCS11.load_engine()
@@ -140,10 +141,10 @@ used.  Before you can do that, you'll need the following:
 2. A serial number for your device
 3. A name for the device
 
-The signing certificate and serial number of very important. After the
+The signing certificate and serial number are very important. After the
 provisioning process, they are locked down and cannot be changed without
-replacing the ATECC508A. The device name is purely informational unless you
-choose to use it otherwise in your software.
+replacing the ATECC508A/608A. The device name is purely informational unless you
+choose to use it in your software.
 
 NervesKeys support an auxillary set of certificates that identify the device.
 These are writable after the provisioning process. Since they're writable, they
@@ -158,7 +159,7 @@ a "signer certificate". You will eventually need to upload the signer
 certificate to NervesHub or AWS IoT or wherever you would like to authenticate
 devices.
 
-Due to memory limitations, the ATECC508A has a way to compress X.509
+Due to memory limitations, the ATECC508A/608A has a way to compress X.509
 certificates on chip. See [ATECC Compressed Certificate
 Definition](https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en591852).
 To comply with the limitations of compressible certificates, NervesKey provides
@@ -189,16 +190,16 @@ Be aware that there are a lot of things called serial numbers. In an attempt to
 minimize confusion, we'll refer to the serial number that identifies the device
 to humans and other machines as the "manufacturer serial number". This string
 (it need not be a number) is commonly printed on a label on a device. It may be
-embedded in a barcode. Other serial numbers exist - the ATECC508A has a 9 byte
-one and X.509 certificates have ones. Those serial numbers have guarantees on
-uniqueness. It is up to the device manufacturer to make sure that the
+embedded in a barcode. Other serial numbers exist - the ATECC508A/608A has a 9
+byte one and X.509 certificates have ones. Those serial numbers have guarantees
+on uniqueness. It is up to the device manufacturer to make sure that the
 "manufacturer serial number" is unique. People generally want to do this for
 their own sanity.
 
 The NervesKey saves the manufacturing serial number in the one-time programmable
-memory on the ATECC508A and also in the device's X.509 certificate. The device's
-X.509 certificate is signed, so cloud servers can trust the manufacturer serial
-number.
+memory on the ATECC508A/608A and also in the device's X.509 certificate. The
+device's X.509 certificate is signed, so cloud servers can trust the
+manufacturer serial number.
 
 At this point, you're the manufacturer. Decide how you'd like your serial
 numbers to look. Whatever you pick, it must fit in 16-bytes when represented in
@@ -207,7 +208,7 @@ ASCII (UTF-8 might work, but isn't being tested).
 ## Provisioning
 
 Now that you have a signing certificate, the signer's private key, and a
-manufacturer serial number, you can provision a NervesKey or the ATECC508A
+manufacturer serial number, you can provision a NervesKey or the ATECC508A/608A
 acting as a NervesKey in your device.  Usually there's some custom manufacturing
 support software that performs this step. We'll provision at the iex prompt.
 
@@ -262,7 +263,7 @@ include:
 2. Experimentation
 3. Fixing errors in the original certificates
 
-The auxiliary certificate is stored in writable memory on the ATECC508A.
+The auxiliary certificate is stored in writable memory on the ATECC508A/608A.
 
 The NervesKey must be provisioned before the auxiliary certificate can be
 written. Assuming that's been done, copy the signer certificate and private key

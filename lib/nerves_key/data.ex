@@ -1,6 +1,6 @@
 defmodule NervesKey.Data do
   @moduledoc """
-  This module handles Data Zone data stored in the Nerves Key.
+  This module handles Data Zone data stored in the NervesKey.
   """
 
   @doc """

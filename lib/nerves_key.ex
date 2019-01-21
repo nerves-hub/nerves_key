@@ -8,6 +8,9 @@ defmodule NervesKey do
 
   @build_year DateTime.utc_now().year
 
+  @typedoc "Which device/signer certificate pair to use"
+  @type certificate_pair() :: :primary | :aux
+
   @doc """
   Check whether the NervesKey has been provisioned
   """
@@ -49,17 +52,17 @@ defmodule NervesKey do
 
   The device must be programmed for this to work.
   """
-  @spec device_cert(ATECC508A.Transport.t()) :: X509.Certificate.t()
-  def device_cert(transport) do
+  @spec device_cert(ATECC508A.Transport.t(), certificate_pair()) :: X509.Certificate.t()
+  def device_cert(transport, which \\ :primary) do
     {:ok, device_sn} = Config.device_sn(transport)
-    {:ok, device_data} = ATECC508A.DataZone.read(transport, 10)
+    {:ok, device_data} = ATECC508A.DataZone.read(transport, Data.device_cert_slot(which))
 
     {:ok, <<signer_public_key_raw::64-bytes, _pad::8-bytes>>} =
-      ATECC508A.DataZone.read(transport, 11)
+      ATECC508A.DataZone.read(transport, Data.signer_pubkey_slot(which))
 
     signer_public_key = ATECC508A.Certificate.raw_to_public_key(signer_public_key_raw)
     {:ok, %OTP{manufacturer_sn: serial_number}} = OTP.read(transport)
-    {:ok, public_key_raw} = ATECC508A.Request.genkey(transport, 0, false)
+    {:ok, public_key_raw} = Data.genkey_raw(transport, false)
 
     template = ATECC508A.Certificate.Template.device(serial_number, signer_public_key)
 
@@ -78,12 +81,12 @@ defmodule NervesKey do
   @doc """
   Read the signer certificate from the slot
   """
-  @spec signer_cert(ATECC508A.Transport.t()) :: X509.Certificate.t()
-  def signer_cert(transport) do
-    {:ok, signer_data} = ATECC508A.DataZone.read(transport, 12)
+  @spec signer_cert(ATECC508A.Transport.t(), certificate_pair()) :: X509.Certificate.t()
+  def signer_cert(transport, which \\ :primary) do
+    {:ok, signer_data} = ATECC508A.DataZone.read(transport, Data.signer_cert_slot(which))
 
     {:ok, <<signer_public_key_raw::64-bytes, _pad::8-bytes>>} =
-      ATECC508A.DataZone.read(transport, 11)
+      ATECC508A.DataZone.read(transport, Data.signer_pubkey_slot(which))
 
     signer_public_key = ATECC508A.Certificate.raw_to_public_key(signer_public_key_raw)
     template = ATECC508A.Certificate.Template.signer(signer_public_key)
@@ -149,6 +152,41 @@ defmodule NervesKey do
     # from changing it. See datasheet for how GenKey doesn't check the zone
     # lock.
     :ok = ATECC508A.Request.lock_slot(transport, 0)
+  end
+
+  @doc """
+  Provision the auxilliary device/signer certificates on a NervesKey.
+
+  This function creates and saves the auxilliary certificates. These
+  are only needed if the ones written by `provision/4` are not
+  usable. They are not used unless explicitly requested. See the
+  README.md for details.
+
+  You may call this function multiple times after the ATECC508A
+  has been provisioned.
+  """
+  @spec provision_aux_certificates(
+          ATECC508A.Transport.t(),
+          X509.Certificate.t(),
+          X509.PrivateKey.t()
+        ) :: :ok
+  def provision_aux_certificates(transport, signer_cert, signer_key) do
+    check_time()
+
+    manufacturer_sn = manufacturer_sn(transport)
+    {:ok, device_public_key} = Data.genkey(transport, false)
+    {:ok, device_sn} = Config.device_sn(transport)
+
+    device_cert =
+      ATECC508A.Certificate.new_device(
+        device_public_key,
+        device_sn,
+        manufacturer_sn,
+        signer_cert,
+        signer_key
+      )
+
+    Data.write_aux_certs(transport, device_sn, device_cert, signer_cert)
   end
 
   # Configure an ATECC508A or ATECC608A as a NervesKey.

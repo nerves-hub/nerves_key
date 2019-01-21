@@ -278,7 +278,7 @@ signer_cert = File.read!("/tmp/#{cert_name}.cert") |> X509.Certificate.from_pem!
 signer_key = File.read!("/tmp/#{cert_name}.key") |> X509.PrivateKey.from_pem!();true
 
 {:ok, i2c} = ATECC508A.Transport.I2C.init([])
-NervesKey.provision_aux(i2c, signer_cert, signer_key)
+NervesKey.provision_aux_certificates(i2c, signer_cert, signer_key)
 ```
 
 ## Support

@@ -5,11 +5,11 @@ relatively inexpensive additions to devices that attach to an I2C bus. This
 directory contains circuit board designs to add an ATECC508A/608A to Raspberry
 Pis.
 
-## 5-pin bottom solderable module
+## 5-pin bottom solder-able module
 
 ![NervesKey bottom](proto4/nerves_key_bottom.jpg "NervesKey bottom mount")
 
-The `proto4` directory is a hand solderable module that can be mounted
+The `proto4` directory is a hand solder-able module that can be mounted
 underneath the Raspberry Pi or connected "upside down" to the top.
 
 Parts:

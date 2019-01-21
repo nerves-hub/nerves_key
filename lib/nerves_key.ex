@@ -100,9 +100,15 @@ defmodule NervesKey do
   end
 
   @doc """
-  Provision a NervesKey in one step
+  Provision a NervesKey in one step.
 
-  This function does it all, but it requires the signer's private key.
+  See the README.md for how to use this. This function locks the
+  ATECC508A down, so you'll want to be sure what you pass it is
+  correct.
+
+  This function does it all. It requires the signer's private key so
+  handle that with care. Alternatively, please consider sending a PR
+  for supporting off-device signatures so that HSMs can be used.
   """
   @spec provision(
           ATECC508A.Transport.t(),

@@ -9,11 +9,20 @@ defmodule NervesKey.Data do
   The public key is returned on success. This can only be called on devices that
   have their configuration locked, but not their data.
   """
-  @spec genkey(ATECC508A.Transport.t()) :: {:ok, X509.PublicKey.t()} | {:error, atom()}
-  def genkey(transport) do
-    with {:ok, raw_key} = ATECC508A.Request.genkey(transport, 0, true) do
+  @spec genkey(ATECC508A.Transport.t(), boolean()) :: {:ok, X509.PublicKey.t()} | {:error, atom()}
+  def genkey(transport, create? \\ true) do
+    with {:ok, raw_key} = genkey_raw(transport, create?) do
       {:ok, ATECC508A.Certificate.raw_to_public_key(raw_key)}
     end
+  end
+
+  @doc """
+  Run the genkey operation on the NervesKey private key slot
+  """
+  @spec genkey_raw(ATECC508A.Transport.t(), boolean()) ::
+          {:ok, ATECC508A.ecc_public_key()} | {:error, atom()}
+  def genkey_raw(transport, create?) do
+    ATECC508A.Request.genkey(transport, 0, create?)
   end
 
   @doc """
@@ -69,6 +78,42 @@ defmodule NervesKey.Data do
     end)
   end
 
+  @doc """
+  Write new device and signer certificates to the auxillary slots
+  """
+  @spec write_aux_certs(
+          ATECC508A.Transport.t(),
+          ATECC508A.serial_number(),
+          X509.Certificate.t(),
+          X509.Certificate.t()
+        ) :: :ok
+  def write_aux_certs(transport, device_sn, device_cert, signer_cert) do
+    signer_template =
+      signer_cert
+      |> X509.Certificate.public_key()
+      |> ATECC508A.Certificate.Template.signer()
+
+    signer_compressed = ATECC508A.Certificate.compress(signer_cert, signer_template)
+
+    device_template =
+      ATECC508A.Certificate.Template.device(device_sn, signer_compressed.public_key)
+
+    device_compressed = ATECC508A.Certificate.compress(device_cert, device_template)
+
+    :ok =
+      ATECC508A.DataZone.write_padded(transport, device_cert_slot(:aux), device_compressed.data)
+
+    :ok =
+      ATECC508A.DataZone.write_padded(
+        transport,
+        signer_pubkey_slot(:aux),
+        signer_compressed.public_key
+      )
+
+    :ok =
+      ATECC508A.DataZone.write_padded(transport, signer_cert_slot(:aux), signer_compressed.data)
+  end
+
   # @doc """
   # Lock the OTP and data zones.
 
@@ -86,4 +131,27 @@ defmodule NervesKey.Data do
 
     ATECC508A.DataZone.lock(transport, all_data)
   end
+
+  # See README.md for slot assignments
+
+  @doc """
+  Return the slot that stores the compressed device certificate.
+  """
+  @spec device_cert_slot(NervesKey.certificate_pair()) :: ATECC508A.Request.slot()
+  def device_cert_slot(:primary), do: 10
+  def device_cert_slot(:aux), do: 9
+
+  @doc """
+  Return the slot that stores the compressed signer certificate.
+  """
+  @spec signer_cert_slot(NervesKey.certificate_pair()) :: ATECC508A.Request.slot()
+  def signer_cert_slot(:primary), do: 12
+  def signer_cert_slot(:aux), do: 15
+
+  @doc """
+  Return the slot that stores the signer's public key.
+  """
+  @spec signer_pubkey_slot(NervesKey.certificate_pair()) :: ATECC508A.Request.slot()
+  def signer_pubkey_slot(:primary), do: 11
+  def signer_pubkey_slot(:aux), do: 14
 end

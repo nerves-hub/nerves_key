@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0
+
+* New features
+  * Support a auxiliary device certificate that can be updated after the
+    provisioning step. This supports use cases where the provisioning
+    certificate's private key isn't available or won't work.
+  * Add `provisioned?/1` to quickly check whether a device has been provisioned
+
 ## v0.2.0
 
 * New features

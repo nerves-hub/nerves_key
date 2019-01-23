@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.1
+
+* New features
+  * Add helper for provisioning NervesKeys using a default serial number
+
 ## v0.3.0
 
 * New features

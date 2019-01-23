@@ -202,8 +202,19 @@ device's X.509 certificate is signed, so cloud servers can trust the
 manufacturer serial number.
 
 At this point, you're the manufacturer. Decide how you'd like your serial
-numbers to look. Whatever you pick, it must fit in 16-bytes when represented in
-ASCII (UTF-8 might work, but isn't being tested).
+numbers to look. Whatever you pick, it must fit in 16-bytes. Representing the
+serial number is ASCII is commonly done. If you don't want to deal with this, do
+what we do (Base32-encode the ATECC508A/608A's globally unique identifier):
+
+```elixir
+iex> {:ok, i2c} = ATECC508A.Transport.I2C.init([])
+{:ok, {ATECC508A.Transport.I2C, {#Reference<0.879310498.269090821.27261>, 96}}}
+iex> NervesKey.default_info(i2c)
+%NervesKey.ProvisioningInfo{
+  board_name: "NervesKey",
+  manufacturer_sn: "AER245UNQOY4T3Q"
+}
+```
 
 ## Provisioning
 
@@ -230,7 +241,7 @@ sftp> exit
 Next, go to the IEx prompt on the device and run the following:
 
 ```elixir
-# Customize these
+# Customize these or use `NervesKey.default_info/1` for defaults
 cert_name="nerveskey_prod_signer1"
 manufacturer_sn = "N1234"
 board_name = "NervesKey"

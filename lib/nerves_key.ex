@@ -4,7 +4,7 @@ defmodule NervesKey do
   or any ATECC508A/608A that can be configured similarly.
   """
 
-  alias NervesKey.{Config, OTP, Data}
+  alias NervesKey.{Config, OTP, Data, ProvisioningInfo}
 
   @build_year DateTime.utc_now().year
 
@@ -115,7 +115,7 @@ defmodule NervesKey do
   """
   @spec provision(
           ATECC508A.Transport.t(),
-          NervesKey.ProvisioningInfo.t(),
+          ProvisioningInfo.t(),
           X509.Certificate.t(),
           X509.PrivateKey.t()
         ) :: :ok
@@ -187,6 +187,20 @@ defmodule NervesKey do
       )
 
     Data.write_aux_certs(transport, device_sn, device_cert, signer_cert)
+  end
+
+  @doc """
+  Return default provisioning info for a NervesKey
+
+  This function is used for pre-programmed NervesKey devices. The
+  serial number is a Base32-encoded version of the ATECC508A/608A's globally unique
+  serial number. No additional care is needed to keep the number unique.
+  """
+  @spec default_info(ATECC508A.Transport.t()) :: ProvisioningInfo.t()
+  def default_info(transport) do
+    {:ok, sn} = Config.device_sn(transport)
+
+    %ProvisioningInfo{manufacturer_sn: Base.encode32(sn, padding: false), board_name: "NervesKey"}
   end
 
   # Configure an ATECC508A or ATECC608A as a NervesKey.

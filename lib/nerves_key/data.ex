@@ -114,6 +114,16 @@ defmodule NervesKey.Data do
       ATECC508A.DataZone.write_padded(transport, signer_cert_slot(:aux), signer_compressed.data)
   end
 
+  @doc """
+  Clear out the auxillary slots
+  """
+  @spec clear_aux_certs(ATECC508A.Transport.t()) :: :ok
+  def clear_aux_certs(transport) do
+    :ok = ATECC508A.DataZone.write_padded(transport, device_cert_slot(:aux), <<>>)
+    :ok = ATECC508A.DataZone.write_padded(transport, signer_pubkey_slot(:aux), <<>>)
+    :ok = ATECC508A.DataZone.write_padded(transport, signer_cert_slot(:aux), <<>>)
+  end
+
   # @doc """
   # Lock the OTP and data zones.
 

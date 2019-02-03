@@ -155,9 +155,9 @@ defmodule NervesKey do
   end
 
   @doc """
-  Provision the auxilliary device/signer certificates on a NervesKey.
+  Provision the auxiliary device/signer certificates on a NervesKey.
 
-  This function creates and saves the auxilliary certificates. These
+  This function creates and saves the auxiliary certificates. These
   are only needed if the ones written by `provision/4` are not
   usable. They are not used unless explicitly requested. See the
   README.md for details.
@@ -187,6 +187,27 @@ defmodule NervesKey do
       )
 
     Data.write_aux_certs(transport, device_sn, device_cert, signer_cert)
+  end
+
+  @doc """
+  Clear out the auxiliary certificates
+
+  This function overwrites the auxiliary certificate slots with
+  """
+  @spec clear_aux_certificates(ATECC508A.Transport.t()) :: :ok
+  def clear_aux_certificates(transport) do
+    Data.clear_aux_certs(transport)
+  end
+
+  @doc """
+  Check whether the auxiliary certificates were programmed
+  """
+  @spec has_aux_certificates?(ATECC508A.Transport.t()) :: boolean()
+  def has_aux_certificates?(transport) do
+    slot = Data.device_cert_slot(:aux)
+    slot_size = ATECC508A.DataZone.slot_size(slot)
+    {:ok, slot_contents} = ATECC508A.DataZone.read(transport, slot)
+    slot_contents != <<0::size(slot_size)-unit(8)>>
   end
 
   @doc """

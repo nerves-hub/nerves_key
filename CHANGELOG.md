@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.2
+
+* New features
+  * Add helper functions for detecting and clearing out auxiliary certificates
+
 ## v0.3.1
 
 * New features

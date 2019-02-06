@@ -12,6 +12,12 @@ defmodule NervesKey do
   @type certificate_pair() :: :primary | :aux
 
   @doc """
+  Detect if a NervesKey is available on the transport
+  """
+  @spec detected?(ATECC508A.Transport.t()) :: boolean()
+  defdelegate detected?(transport), to: ATECC508A.Transport
+
+  @doc """
   Check whether the NervesKey has been provisioned
   """
   @spec provisioned?(ATECC508A.Transport.t()) :: boolean()

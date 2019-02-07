@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.0
+
+* New features
+  * Add `NervesKey.detected?/1` to check whether a NervesKey is actually
+    installed.
+
+* Bug fixes
+  * Clear out the entire auxiliary certificate slots to avoid any confusion for
+    whether the certificates are present.
+
 ## v0.3.2
 
 * New features

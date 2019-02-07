@@ -119,9 +119,14 @@ defmodule NervesKey.Data do
   """
   @spec clear_aux_certs(ATECC508A.Transport.t()) :: :ok
   def clear_aux_certs(transport) do
-    :ok = ATECC508A.DataZone.write_padded(transport, device_cert_slot(:aux), <<>>)
-    :ok = ATECC508A.DataZone.write_padded(transport, signer_pubkey_slot(:aux), <<>>)
-    :ok = ATECC508A.DataZone.write_padded(transport, signer_cert_slot(:aux), <<>>)
+    :ok = clear_slot(transport, device_cert_slot(:aux))
+    :ok = clear_slot(transport, signer_pubkey_slot(:aux))
+    :ok = clear_slot(transport, signer_cert_slot(:aux))
+  end
+
+  defp clear_slot(transport, slot) do
+    blank = ATECC508A.DataZone.pad_to_slot_size(slot, <<>>)
+    ATECC508A.DataZone.write_padded(transport, slot, blank)
   end
 
   # @doc """

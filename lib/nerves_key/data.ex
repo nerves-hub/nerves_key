@@ -11,7 +11,7 @@ defmodule NervesKey.Data do
   """
   @spec genkey(ATECC508A.Transport.t(), boolean()) :: {:ok, X509.PublicKey.t()} | {:error, atom()}
   def genkey(transport, create? \\ true) do
-    with {:ok, raw_key} = genkey_raw(transport, create?) do
+    with {:ok, raw_key} <- genkey_raw(transport, create?) do
       {:ok, ATECC508A.Certificate.raw_to_public_key(raw_key)}
     end
   end
@@ -70,8 +70,7 @@ defmodule NervesKey.Data do
   @doc """
   Write all of the slots
   """
-  @spec write_slots(ATECC508A.Transport.t(), [{ATECC508A.Request.slot(), binary()}]) ::
-          :ok | {:error, atom()}
+  @spec write_slots(ATECC508A.Transport.t(), [{ATECC508A.Request.slot(), binary()}]) :: :ok
   def write_slots(transport, slot_data) do
     Enum.each(slot_data, fn {slot, data} ->
       :ok = ATECC508A.DataZone.write_padded(transport, slot, data)

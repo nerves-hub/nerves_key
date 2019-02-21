@@ -15,7 +15,7 @@ defmodule NervesKey.OTP do
   ]
 
   @type t :: %__MODULE__{
-          flags: non_neg_integer(),
+          flags: 0..65535,
           manufacturer_sn: binary(),
           board_name: binary(),
           user: <<_::256>>
@@ -42,7 +42,7 @@ defmodule NervesKey.OTP do
   @doc """
   Write NervesKey information to the OTP zone.
   """
-  @spec write(Transport.t(), binary()) :: :ok | {:error, atom()}
+  @spec write(Transport.t(), <<_::512>>) :: :ok | {:error, atom()}
   defdelegate write(transport, data), to: OTPZone
 
   @doc """

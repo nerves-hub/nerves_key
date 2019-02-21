@@ -20,7 +20,7 @@ defmodule NervesKey.Config do
 
   This can only be called once. Subsequent calls will fail.
   """
-  @spec configure(ATECC508A.Transport.t()) :: {:error, atom()} | {:ok, boolean()}
+  @spec configure(ATECC508A.Transport.t()) :: {:error, atom()} | :ok
   def configure(transport) do
     with {:ok, info} <- Configuration.read(transport),
          provision_info = %Configuration{

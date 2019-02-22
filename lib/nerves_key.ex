@@ -7,6 +7,10 @@ defmodule NervesKey do
   alias NervesKey.{Config, OTP, Data, ProvisioningInfo}
 
   @build_year DateTime.utc_now().year
+  @settings_slots [8, 7, 6, 5]
+  @settings_max_length Enum.reduce(@settings_slots, 0, fn slot, acc ->
+                         acc + ATECC508A.DataZone.slot_size(slot)
+                       end)
 
   @typedoc "Which device/signer certificate pair to use"
   @type certificate_pair() :: :primary | :aux
@@ -228,6 +232,91 @@ defmodule NervesKey do
     {:ok, sn} = Config.device_sn(transport)
 
     %ProvisioningInfo{manufacturer_sn: Base.encode32(sn, padding: false), board_name: "NervesKey"}
+  end
+
+  @doc """
+  Return the settings block as a binary
+  """
+  @spec get_raw_settings(ATECC508A.Transport.t()) :: {:ok, binary()} | {:error, atom()}
+  def get_raw_settings(transport) do
+    all_reads = Enum.map(@settings_slots, &ATECC508A.DataZone.read(transport, &1))
+
+    case Enum.find(all_reads, fn {result, _} -> result != :ok end) do
+      nil ->
+        raw = Enum.map_join(all_reads, fn {:ok, contents} -> contents end)
+        {:ok, raw}
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Return all of the setting stored in the NervesKey as a map
+  """
+  @spec get_settings(ATECC508A.Transport.t()) :: {:ok, map()} | {:error, atom()}
+  def get_settings(transport) do
+    with {:ok, raw_settings} <- get_raw_settings(transport) do
+      try do
+        settings = :erlang.binary_to_term(raw_settings, [:safe])
+        {:ok, settings}
+      catch
+        _, _ -> {:error, :corrupt}
+      end
+    end
+  end
+
+  @doc """
+  Store settings on the NervesKey
+
+  This overwrites all of the settings that are currently on the key and should
+  be used with care since there's no protection against a race condition with
+  other NervesKey users.
+  """
+  @spec put_settings(ATECC508A.Transport.t(), map()) :: :ok
+  def put_settings(transport, settings) when is_map(settings) do
+    raw_settings = :erlang.term_to_binary(settings)
+    put_raw_settings(transport, raw_settings)
+  end
+
+  @doc """
+  Store raw settings on the Nerves Key
+
+  This overwrites all of the settings and should be used with care since there's
+  no protection against race conditions with other users of this API.
+  """
+  @spec put_raw_settings(ATECC508A.Transport.t(), binary()) :: :ok
+  def put_raw_settings(transport, raw_settings) when is_binary(raw_settings) do
+    if byte_size(raw_settings) > @settings_max_length do
+      raise "Settings are too large and won't fit in the NervesKey. The max raw size is #{
+              @settings_max_length
+            }."
+    end
+
+    padded_settings = pad(raw_settings, @settings_max_length)
+    slots = break_into_slots(padded_settings, @settings_slots)
+
+    Enum.each(slots, fn {slot, data} -> ATECC508A.DataZone.write(transport, slot, data) end)
+  end
+
+  defp pad(bin, len) when byte_size(bin) < len do
+    to_pad = 8 * (len - byte_size(bin))
+    <<bin::binary, 0::size(to_pad)>>
+  end
+
+  defp pad(bin, _len), do: bin
+
+  defp break_into_slots(bin, slots) do
+    break_into_slots(bin, slots, [])
+    |> Enum.reverse()
+  end
+
+  defp break_into_slots(<<>>, [], result), do: result
+
+  defp break_into_slots(bin, [slot | rest], result) do
+    slot_len = ATECC508A.DataZone.slot_size(slot)
+    {contents, next} = :erlang.split_binary(bin, slot_len)
+    break_into_slots(next, rest, [{slot, contents} | result])
   end
 
   # Configure an ATECC508A or ATECC608A as a NervesKey.

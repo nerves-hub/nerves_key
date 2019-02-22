@@ -14,8 +14,8 @@ device easier. It has the following features:
 1. Provision blank ATECC508A/608A devices - this includes private key generation
 2. Storage for serial number and one-time calibration data (useful if primary
    storage is on a removable MicroSD card)
-3. Support for Microchip's compressed X.509 certificate format for interop with
-   C libraries
+3. Support for Microchip's compressed X.509 certificate format to work with
+   Microchip's C libraries
 4. Support for signing device certificates so that devices can be included in a
    PKI
 5. Support for storing a small amount of run-time configuration in unused data
@@ -293,6 +293,18 @@ signer_key = File.read!("/tmp/#{cert_name}.key") |> X509.PrivateKey.from_pem!();
 NervesKey.provision_aux_certificates(i2c, signer_cert, signer_key)
 ```
 
+## Settings
+
+The NervesKey has bytes left over for storing a few settings. The
+`NervesKey.put_settings/2` and `NervesKey.get_settings/1` APIs let you store and
+retrieve a map. Since the storage is limited and relatively slow, this is
+intended for settings that rarely change or may be tightly coupled with
+certificates already being stored in the NervesKey.
+
+Internally, `NervesKey` calls `:erlang.term_to_binary` to convert the map to raw
+bytes and then it spreads it across ATECC508A slots for storage. This means that
+the keys used in the map take up space too.
+
 ## Support
 
 If you run into problems, please help us improve this project by filing an
@@ -323,24 +335,24 @@ to the Microchip Standard TLS Configuration to minimize changes to other
 software. Unused slots are configured so that applications can use them as they
 would an EEPROM.
 
-Slot | Description                       | SlotConfig | KeyConfig | Primary properties
------|-----------------------------------|------------|-----------|-------------------
-0    | Device private key                | 87 20      | 33 00     | Private key, read only; lockable
-1    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
-2    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
-3    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
-4    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
-5    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
-6    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
-7    | Unused                            | 0F 0F      | 1C 00     | Clear read/write; not lockable
-8    | Unused                            | 0F 0F      | 3C 00     | Clear read/write; lockable
-9    | Aux device certificate            | 0F 0F      | 3C 00     | Clear read/write; lockable
-10   | Device certificate                | 0F 2F      | 3C 00     | Clear read only; lockable
-11   | Signer public key                 | 0F 2F      | 30 00     | P256; Clear read only; lockable
-12   | Signer certificate                | 0F 2F      | 3C 00     | Clear read only; lockable
-13   | Signer serial number +            | 0F 2F      | 3C 00     | Clear read only; lockable
-14   | Aux signer public key             | 0F 0F      | 3C 00     | Clear read/write; lockable
-15   | Aux signer certificate            | 0F 0F      | 3C 00     | Clear read/write; lockable
+Slot | Description              | SlotConfig | KeyConfig | Primary properties
+-----|--------------------------|------------|-----------|-------------------
+0    | Device private key       | 87 20      | 33 00     | Private key, read only; lockable
+1    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
+2    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
+3    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
+4    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
+5    | Settings (Part 3)        | 0F 0F      | 1C 00     | Clear read/write; not lockable
+6    | Settings (Part 2)        | 0F 0F      | 1C 00     | Clear read/write; not lockable
+7    | Settings (Part 1)        | 0F 0F      | 1C 00     | Clear read/write; not lockable
+8    | Settings (Part 0)        | 0F 0F      | 3C 00     | Clear read/write; lockable
+9    | Aux device certificate   | 0F 0F      | 3C 00     | Clear read/write; lockable
+10   | Device certificate       | 0F 2F      | 3C 00     | Clear read only; lockable
+11   | Signer public key        | 0F 2F      | 30 00     | P256; Clear read only; lockable
+12   | Signer certificate       | 0F 2F      | 3C 00     | Clear read only; lockable
+13   | Signer serial number +   | 0F 2F      | 3C 00     | Clear read only; lockable
+14   | Aux signer public key    | 0F 0F      | 3C 00     | Clear read/write; lockable
+15   | Aux signer certificate   | 0F 0F      | 3C 00     | Clear read/write; lockable
 
 + The signer serial number slot is currently unused since the signer's cert is
   computed from the public key

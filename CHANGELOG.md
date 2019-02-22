@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.0
+
+* New features
+  * Add `NervesKey.put_settings/2` and `NervesKey.get_settings/1` to support
+    storing and retrieving a small map on a NervesKey. This is useful for data
+    that travels with certificates and settings that don't change much.
+
 ## v0.4.0
 
 * New features

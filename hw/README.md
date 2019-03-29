@@ -9,7 +9,7 @@ The NervesKey is a tiny circuit board with an ATECC608A cryptographic chip from 
 This directory contains hardware documentation for the production NervesKey board.  Historical versions from earlier development efforts are removed to avoid confusion, but in general those will operate the same way.  Some historical versions might contain the ATECC508A chip instead, but the NervesKey software is agnostic 
 to this difference.  
 
-The production NervesKey board contains a the tiny UDFN version of the part  [ATECC608A-MAHDA](https://www.digikey.com/product-detail/en/microchip-technology/ATECC608A-MAHDA-S/ATECC608A-MAHDA-STR-ND/7928113) and a 0.1uF 0402 size capacitor.  These boards are not easy assembled by a user, so they are professionally manufactured in quantity for the Nerves project and offered for sale in low quantity by Nerves contributor [Troodon Software, LLC](http://www.troodon-software.com/).  
+The production NervesKey board contains a the tiny 'UDFN' version of the part  [ATECC608A-MAHDA](https://www.digikey.com/product-detail/en/microchip-technology/ATECC608A-MAHDA-S/ATECC608A-MAHDA-STR-ND/7928113) and a 0.1uF 0402 size capacitor.  These boards are not easy assembled by a user, so they are professionally manufactured in quantity for the Nerves project and offered for sale in low quantity by Nerves contributor [Troodon Software, LLC](http://www.troodon-software.com/).  
 
 ## Primary Application - Bottom Side Solder Attach To Raspberry Pi
 

@@ -1,34 +1,28 @@
 # Hardware
 
-The NervesKey is a provisioned ATECC508A or ATECC608A. Both chips are
-relatively inexpensive additions to devices that attach to an I2C bus. This
-directory contains circuit board designs to add an ATECC508A/608A to Raspberry
-Pis.
+The NervesKey is a tiny circuit board with an ATECC608A cryptographic chip from Microchip Technology. 
+The chip is a relatively inexpensive addition to embedded computing platforms that include an I2C bus. 
+The NervesKey circuit board is primarily intended to offer an easy and non-disruptive adaptation to the 
+Raspberry Pi, but can also be used in other development applications.
 
-## 5-pin bottom solder-able module
+![NervesKey bottom](pictures/NK_RPi_Bottom_Mount.jpg "Assembled NervesKey Boards")
+Figure 1 - Assembled NervesKey Boards
 
-![NervesKey bottom](proto4/nerves_key_bottom.jpg "NervesKey bottom mount")
+This directory contains hardware documentation for the production NervesKey board.  Historical versions existing 
+from earlier development efforts are removed to avoid confusion, but in general will operate the same way.  
+Some historical versions might contain the ATECC508A chip instead, but the NervesKey software is agnostic 
+to this difference.  
 
-The `proto4` directory is a hand solder-able module that can be mounted
-underneath the Raspberry Pi or connected "upside down" to the top.
+The production NervesKey board contains a tiny part [ATECC608A-MAHDA](https://www.digikey.com/product-detail/en/microchip-technology/ATECC608A-MAHDA-S/ATECC608A-MAHDA-STR-ND/7928113)
+and a 0.1uF 0402 size capacitor.  These boards are not easy assembled by a user, so they are professionally manufactured in quantity for the Nerves project 
+and offered for sale in low quantity by Nerves contributor [Troodon Software, LLC](http://www.troodon-software.com/).  
 
-Parts:
+## Bottom side solder-able module
 
-* [PCB from OSHPark](https://oshpark.com/shared_projects/A2rzFSK7)
-* [ATECC608A-SSHDA](https://www.digikey.com/product-detail/en/microchip-technology/ATECC608A-SSHDA-B/ATECC608A-SSHDA-B-ND/7928178)
-* [0.1 uF 0603 capacitor](https://www.digikey.com/product-detail/en/samsung-electro-mechanics/CL10F104ZO8NNNC/1276-1258-1-ND/3889344)
+The easiest way to outfit a Raspberry Pi with a NervesKey is to solder it to the 'hat' expansion header on the bottom of the board as shown.  This will connect the 
+appropriate signals and keep the board out of the way of other uses of the hat header.  The NervesKey board is made relatively thin to support this application.
 
-See the [proto4](proto4) directory for Eagle files.
+![NervesKey bottom](pictures/NK_RPi_Bottom_Mount.jpg "NervesKey Bottom Mount")
+Figure 2 - Typical NervesKey Application
 
-## NervesKey shim
-
-![NervesKey shim](shim/nerves_key_shim1.png) ![NervesKey shim](shim/nerves_key_shim2.png)
-
-We're working on a "shim" version that slides onto the Raspberry Pi's GPIO
-header and can fit in between the Pi and a hat. No soldering required and it
-is very small. For a permanent connection, it can be soldered down like the
-version above.
-
-* [Schematics](shim/MCM18001_NERVESKEY_X1_SCH_181214.PDF)
-
-See the [shim](shim) directory for files.
+See the [schematic](TSW19001_NERVESKEY_X1_SCH.PDF) for additional hardware details, notes, and examples.

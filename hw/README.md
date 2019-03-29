@@ -17,6 +17,6 @@ The easiest way to outfit a Raspberry Pi with a NervesKey is to solder it to the
 
 ![NervesKey Application](pictures/NK_RPi_Bottom_Mount.jpg "NervesKey Bottom Mount")
 
-**Figure 2**  Typical NervesKey Application
+**Figure 2**  Primary NervesKey Application
 
 See the [schematic](TSW19001_NERVESKEY_X1_SCH.PDF) for additional hardware details, notes, and examples.

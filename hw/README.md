@@ -11,7 +11,7 @@ to this difference.
 
 The production NervesKey board contains a tiny part  [ATECC608A-MAHDA](https://www.digikey.com/product-detail/en/microchip-technology/ATECC608A-MAHDA-S/ATECC608A-MAHDA-STR-ND/7928113) and a 0.1uF 0402 size capacitor.  These boards are not easy assembled by a user, so they are professionally manufactured in quantity for the Nerves project and offered for sale in low quantity by Nerves contributor [Troodon Software, LLC](http://www.troodon-software.com/).  
 
-## Bottom side solder-able module
+## Bottom Side Solder Attach 
 
 The easiest way to outfit a Raspberry Pi with a NervesKey is to solder it to the 'hat' expansion header on the bottom of the board as shown.  This will connect the appropriate signals and keep the board out of the way of other uses of the hat header.  The NervesKey board is made relatively thin to support this application.
 

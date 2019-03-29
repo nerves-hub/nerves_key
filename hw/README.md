@@ -3,7 +3,8 @@
 The NervesKey is a tiny circuit board with an ATECC608A cryptographic chip from Microchip Technology. The chip is a relatively inexpensive addition to embedded computing platforms that include an I2C bus. The NervesKey circuit board is primarily intended to offer an easy and non-disruptive adaptation to the Raspberry Pi, but can also be used in other development applications.
 
 ![NervesKey bottom](pictures/NK_Assembled.jpg "Assembled NervesKey Boards")
-Figure 1 - Assembled NervesKey Boards
+
+*Figure 1* Assembled NervesKey Boards
 
 This directory contains hardware documentation for the production NervesKey board.  Historical versions existing from earlier development efforts are removed to avoid confusion, but in general will operate the same way.  Some historical versions might contain the ATECC508A chip instead, but the NervesKey software is agnostic 
 to this difference.  
@@ -15,6 +16,7 @@ The production NervesKey board contains a tiny part [ATECC608A-MAHDA](https://ww
 The easiest way to outfit a Raspberry Pi with a NervesKey is to solder it to the 'hat' expansion header on the bottom of the board as shown.  This will connect the appropriate signals and keep the board out of the way of other uses of the hat header.  The NervesKey board is made relatively thin to support this application.
 
 ![NervesKey bottom](pictures/NK_RPi_Bottom_Mount.jpg "NervesKey Bottom Mount")
-Figure 2 - Typical NervesKey Application
+
+*Figure 2* Typical NervesKey Application
 
 See the [schematic](TSW19001_NERVESKEY_X1_SCH.PDF) for additional hardware details, notes, and examples.

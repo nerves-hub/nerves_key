@@ -28,7 +28,7 @@ ATECC508A/608A during the provisioning process. This is a feature and is
 required for normal operation, but if you're getting started, make sure that you
 have a few extra parts just in case.
 
-See the [hw](hw) folder for hardware design files.
+See [hw/hw.md](hw/hw.md) for information on pre-built hardware modules.
 
 ## Installation
 

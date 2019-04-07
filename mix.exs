@@ -11,7 +11,8 @@ defmodule NervesKey.MixProject do
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      docs: [extras: ["README.md"], main: "readme"],
+      docs: [extras: ["README.md", "hw/hw.md"], main: "readme"],
+      aliases: [docs: ["docs", &copy_images/1]],
       deps: deps(),
       dialyzer: [
         plt_add_apps: [:public_key, :asn1, :crypto, :mix],
@@ -47,5 +48,10 @@ defmodule NervesKey.MixProject do
       {:ex_doc, "~> 0.20", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.6", only: :dev, runtime: false}
     ]
+  end
+
+  # Copy the images referenced by docs, since ex_doc doesn't do this.
+  defp copy_images(_) do
+    File.cp_r("hw/assets", "doc/assets")
   end
 end

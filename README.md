@@ -9,7 +9,7 @@ used for authenticating devices with NervesHub and other cloud services. At a
 high level, it is simple HSM that protects one private key by requiring all
 operations on that key to occur inside chip. The project provides access to the
 chip from Elixir and makes configuration decisions to make working with the
-device easier. It has the following features:   
+device easier. It has the following features:
 
 1. Provision blank ATECC508A/608A devices - this includes private key generation
 2. Storage for serial number and one-time calibration data (useful if primary
@@ -321,7 +321,7 @@ zone.  This software expects the following configuration to be programmed
 (unspecified bytes are either not programmable or kept as their defaults):
 
 Bytes  | Name        | Value  | Description
--------|-------------|--------|------------
+-----  | ----------- | ------ | -----------
 14     | I2C_Enable  | 01     | I2C mode
 16     | I2C_Address | C0     | I2C address of the module (default)
 18     | OTPmode     | AA     | OTP is in read-only mode
@@ -336,7 +336,7 @@ software. Unused slots are configured so that applications can use them as they
 would an EEPROM.
 
 Slot | Description              | SlotConfig | KeyConfig | Primary properties
------|--------------------------|------------|-----------|-------------------
+---- | ------------------------ | ---------- | --------- | ------------------
 0    | Device private key       | 87 20      | 33 00     | Private key, read only; lockable
 1    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
 2    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
@@ -361,7 +361,7 @@ The ATECC508A includes a 64 byte OTP (one-time programmable) memory. It has the
 following layout:
 
 Bytes  | Name              | Contents
--------|-------------------|--------------------------
+------ | ----------------- | -------------------------
 0-3    | Magic             | 4e 72 76 73
 4-5    | Flags             | TBD. Set to 0
 6-15   | Board name        | 10 byte name for the board in ASCII (set unused bytes to 0)

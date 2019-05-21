@@ -37,6 +37,16 @@ defmodule NervesKey.Config do
   end
 
   @doc """
+  Helper for getting information about the ATECC module.
+  """
+  @spec device_info(ATECC508A.Transport.t()) :: {:error, atom()} | {:ok, map()}
+  def device_info(transport) do
+    with {:ok, info} <- Configuration.read(transport) do
+      {:ok, Map.take(info, [:rev_num])}
+    end
+  end
+
+  @doc """
   Helper for getting the ATECC508A's serial number.
   """
   @spec device_sn(ATECC508A.Transport.t()) :: {:error, atom()} | {:ok, String.t()}

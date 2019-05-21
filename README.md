@@ -107,8 +107,9 @@ iex> NervesKey.signer_cert(i2c)
 
 The next step is to tell Erlang's SSL library that you want to use the NervesKey
 when connecting to the server. For that, you'll need
-[nerves_key_pkcs11](https://github.com/nerves-hub/nerves_key_pkcs11). This code
-is somewhat tedious but hopefully the following code fragment will help:
+[nerves_key_pkcs11](https://github.com/nerves-hub/nerves_key_pkcs11) which is
+included as a dependency of this library. This code is somewhat tedious but
+hopefully the following code fragment will help:
 
 ```elixir
    {:ok, engine} = NervesKey.PKCS11.load_engine()

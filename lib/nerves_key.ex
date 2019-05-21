@@ -51,10 +51,12 @@ defmodule NervesKey do
   @doc """
   Read the manufacturer's serial number
   """
-  @spec manufacturer_sn(ATECC508A.Transport.t()) :: binary()
+  @spec manufacturer_sn(ATECC508A.Transport.t()) :: {:ok, binary()} | {:error, atom()}
   def manufacturer_sn(transport) do
-    {:ok, %OTP{manufacturer_sn: serial_number}} = OTP.read(transport)
-    serial_number
+    case OTP.read(transport) do
+      {:ok, %OTP{manufacturer_sn: serial_number}} -> {:ok, serial_number}
+      error -> error
+    end
   end
 
   @doc """
@@ -183,7 +185,7 @@ defmodule NervesKey do
   def provision_aux_certificates(transport, signer_cert, signer_key) do
     check_time()
 
-    manufacturer_sn = manufacturer_sn(transport)
+    {:ok, manufacturer_sn} = manufacturer_sn(transport)
     {:ok, device_public_key} = Data.genkey(transport, false)
     {:ok, device_sn} = Config.device_sn(transport)
 

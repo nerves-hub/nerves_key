@@ -79,7 +79,7 @@ your choosing.
 
 ```elixir
 iex> NervesKey.manufacturer_sn(i2c)
-"ABC12345"
+{:ok, "ABC12345"}
 ```
 
 Of course, the more interesting part of the NervesKeys are its storage of device

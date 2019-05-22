@@ -6,10 +6,10 @@
 The NervesKey is a configured [ATECC508A or ATECC608A Crypto
 Authentication](https://www.microchip.com/wwwproducts/en/ATECC508A) chip that's
 used for authenticating devices with NervesHub and other cloud services. At a
-high level, it is simple HSM that protects one private key by requiring all
-operations on that key to occur inside chip. The project provides access to the
-chip from Elixir and makes configuration decisions to make working with the
-device easier. It has the following features:
+high level, it is a simple hardware security module (HSM) that protects one
+private key by requiring all operations on that key to occur inside chip. The
+project provides access to the chip from Elixir and makes configuration
+decisions to make working with the device easier. It has the following features:
 
 1. Provision blank ATECC508A/608A devices - this includes private key generation
 2. Storage for serial number and one-time calibration data (useful if primary
@@ -27,6 +27,9 @@ It cannot be stressed enough that the NervesKey library locks down the
 ATECC508A/608A during the provisioning process. This is a feature and is
 required for normal operation, but if you're getting started, make sure that you
 have a few extra parts just in case.
+
+See [NervesHub documentation](https://docs.nerves-hub.org/) for end-user
+NervesKey and NervesHub documentation.
 
 See [hw/hw.md](hw/hw.md) for information on pre-built hardware modules.
 

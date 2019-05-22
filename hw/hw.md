@@ -36,4 +36,3 @@ details, notes, and examples.
   website
 * [cryptoauthlib](https://github.com/MicrochipTech/cryptoauthlib) - a different,
   but official C library for the ATECC508A/608A
-

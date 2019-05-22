@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.1
+
+* New features
+  * `nerves_key_pkcs11` is now included as a dependency since it is almost
+    always used and easily forgotten
+  * Add `NervesKey.device_info/1` to expose the ATECC508A/608A version that was
+    installed on the device
+
 ## v0.5.0
 
 * New features

@@ -58,6 +58,35 @@ defmodule NervesKey do
   end
 
   @doc """
+  Return ssl_opts for using the NervesKey
+
+  Pass an engine and optionally which certificate that you'd like to use.
+  """
+  @spec ssl_opts(ATECC508A.Transport.t(), certificate_pair()) :: keyword()
+  def ssl_opts(transport, which \\ :primary) do
+    {:ok, engine} = NervesKey.PKCS11.load_engine()
+
+    cert =
+      NervesKey.device_cert(transport, which)
+      |> X509.Certificate.to_der()
+
+    signer_cert =
+      NervesKey.signer_cert(transport, which)
+      |> X509.Certificate.to_der()
+
+    transport_info = ATECC508A.Transport.info(transport)
+
+    key = NervesKey.PKCS11.private_key(engine, i2c: i2c_instance(transport_info.bus_name))
+    cacerts = [signer_cert]
+
+    [key: key, cert: cert, cacerts: cacerts]
+  end
+
+  defp i2c_instance(<<"i2c-", instance::binary>>) do
+    String.to_integer(instance)
+  end
+
+  @doc """
   Read the device certificate from the slot
 
   The device must be programmed for this to work.

@@ -11,8 +11,8 @@ The production NervesKey board contains the tiny 'UDFN' version of the part
 [ATECC608A-MAHDA](https://www.digikey.com/product-detail/en/microchip-technology/ATECC608A-MAHDA-S/ATECC608A-MAHDA-STR-ND/7928113)
 and a 0.1uF 0402 size capacitor.  These boards are not easily assembled, so they
 are professionally manufactured in high quantity for the Nerves project and
-offered for sale in low quantity by Nerves contributor [Troodon Software,
-LLC](http://www.troodon-software.com/).
+offered for sale at [Tindie /
+NervesKey](https://www.tindie.com/products/troodonsw/nerveskey/).
 
 ## Mounting to a Raspberry Pi
 
@@ -25,8 +25,8 @@ of the hat header.  The NervesKey board is thin to support this application.
 
 ## Schematics
 
-See the [schematic](assets/TSW19001_NERVESKEY_X1_SCH.PDF) for additional hardware
-details, notes, and examples.
+See the [schematic](assets/TSW19001_NERVESKEY_X1_SCH.PDF) for additional
+hardware details, notes, and examples.
 
 ## Links
 

@@ -26,12 +26,14 @@ decisions to make working with the device easier. It has the following features:
 It cannot be stressed enough that the NervesKey library locks down the
 ATECC508A/608A during the provisioning process. This is a feature and is
 required for normal operation, but if you're getting started, make sure that you
-have a few extra parts just in case.
+have a few extra parts just in case you make a mistake.
 
 See [NervesHub documentation](https://docs.nerves-hub.org/) for end-user
 NervesKey and NervesHub documentation.
 
-See [hw/hw.md](hw/hw.md) for information on pre-built hardware modules.
+See [hw/hw.md](hw/hw.md) for hardware information or go to
+[Tindie/NervesKey](https://www.tindie.com/products/troodonsw/nerveskey/) for a
+prebuilt-one.
 
 ## Installation
 

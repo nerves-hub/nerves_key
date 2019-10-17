@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.2
+
+* New features
+  * Add `NervesKey.ssl_opts/1` helper function to simplify integration with
+    libraries using TLS like NervesHub and Tortoise.
+
 ## v0.5.1
 
 * New features

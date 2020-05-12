@@ -38,7 +38,7 @@ defmodule Mix.Tasks.NervesKey.Signer do
     Invalid arguments to `mix nerves_key.signer`.
 
     Usage:
-      mix nerves_key.key create NAME --years-valid <YEARS>
+      mix nerves_key.signer create NAME --years-valid <YEARS>
 
     Run `mix help nerves_key.signer` for more information.
     """)

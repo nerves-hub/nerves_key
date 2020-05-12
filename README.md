@@ -299,6 +299,25 @@ signer_key = File.read!("/tmp/#{cert_name}.key") |> X509.PrivateKey.from_pem!();
 NervesKey.provision_aux_certificates(i2c, signer_cert, signer_key)
 ```
 
+## Debugging without an ATECC508A/608A
+
+Before hardware is available or if you're debugging connections to a service
+(like AWS IoT) and having no luck, it can be useful to manually generate
+device certificates. The `nerves_key.device` helper can be used for this and
+does not require a NervesKey at all. Certificates generated using this helper
+will look like ones stored on the NervesKey except for the important feature of
+the private key part being private.
+
+Here's an example:
+
+```sh
+mix nerves_key.device create <serial number> --signing-cert ca.cert --signing-key ca.key
+```
+
+Just like the signing certs, you can inspect the generated certs with `openssl
+x509`. Services that work with these certificates should work with real
+NervesKeys.
+
 ## Settings
 
 The NervesKey has bytes left over for storing a few settings. The

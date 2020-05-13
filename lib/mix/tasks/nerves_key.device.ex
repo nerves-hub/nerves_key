@@ -13,13 +13,13 @@ defmodule Mix.Tasks.NervesKey.Device do
   While this doesn't make any sense if you're using NervesKeys, it can
   be handy in testing device certs that look like they're from NervesKeys.
 
-    mix nerves_key.device create NAME --signing-cert <CERT> --signing-key <KEY>
+    mix nerves_key.device create NAME --signer-cert <CERT> --signer-key <KEY>
 
   If --years-valid is unspecified, the new certificate will be valid for
   one year.
   """
 
-  @switches [signing_cert: :string, signing_key: :string]
+  @switches [signer_cert: :string, signer_key: :string]
 
   def run(args) do
     {opts, args} = OptionParser.parse!(args, strict: @switches)
@@ -39,7 +39,7 @@ defmodule Mix.Tasks.NervesKey.Device do
     Invalid arguments to `mix nerves_key.device`.
 
     Usage:
-      mix nerves_key.device create NAME --signing-cert <CERT> --signing-key <KEY>
+      mix nerves_key.device create NAME --signer-cert <CERT> --signer-key <KEY>
 
     Run `mix help nerves_key.device` for more information.
     """)
@@ -58,8 +58,8 @@ defmodule Mix.Tasks.NervesKey.Device do
       Mix.raise("Refusing to overwrite #{key_path}. Please remove or change the name")
     end
 
-    signer_cert_path = Keyword.fetch!(opts, :signing_cert)
-    signer_key_path = Keyword.fetch!(opts, :signing_key)
+    signer_cert_path = Keyword.fetch!(opts, :signer_cert)
+    signer_key_path = Keyword.fetch!(opts, :signer_key)
 
     signer_cert = File.read!(signer_cert_path) |> X509.Certificate.from_pem!()
     signer_key = File.read!(signer_key_path) |> X509.PrivateKey.from_pem!()

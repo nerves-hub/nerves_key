@@ -142,12 +142,12 @@ hopefully the following code fragment will help:
 The ATECC508A/608A in the NervesKey needs to be provisioned before it can be
 used.  Before you can do that, you'll need the following:
 
-1. A signing certificate and its private certificate (in other contexts, this is
+1. A signer certificate and its private certificate (in other contexts, this is
    called a certificate authority)
 2. A serial number for your device
 3. A name for the device
 
-The signing certificate and serial number are very important. After the
+The signer certificate and serial number are very important. After the
 provisioning process, they are locked down and cannot be changed without
 replacing the ATECC508A/608A. The device name is purely informational unless you
 choose to use it in your software.
@@ -157,7 +157,7 @@ These are writable after the provisioning process. Since they're writable, they
 can be provisioned and updated at any time. As such, they're not programmed in
 the first-time provisioning process.
 
-### Signing certificates
+### Signer certificates
 
 Part of the provisioning process creates an X.509 certificate for the NervesKey
 that can be used to authenticate TLS connections. This certificate is signed by
@@ -173,7 +173,7 @@ a mix task to create them:
 
 ```sh
 $ mix nerves_key.signer create nerveskey_prod_signer1
-Created signing cert, nerveskey_prod_signer1.cert and private key, nerveskey_prod_signer1.key.
+Created signer cert, nerveskey_prod_signer1.cert and private key, nerveskey_prod_signer1.key.
 
 Please store nerveskey_prod_signer1.key in a safe place.
 
@@ -188,7 +188,7 @@ nerveskey_prod_signer1.cert -text`.
 Check with your IoT service on how the signer certificate is used. If it's only
 used for first-time device registration, then the signer certificate may not
 need a long expiration time. You may also be interested in creating more than
-one signing certificate if you have more than one manufacturing facility.
+one signer certificate if you have more than one manufacturing facility.
 
 ### Manufacturer serial numbers
 
@@ -224,7 +224,7 @@ iex> NervesKey.default_info(i2c)
 
 ## Provisioning
 
-Now that you have a signing certificate, the signer's private key, and a
+Now that you have a signer certificate, the signer's private key, and a
 manufacturer serial number, you can provision a NervesKey or the ATECC508A/608A
 acting as a NervesKey in your device.  Usually there's some custom manufacturing
 support software that performs this step. We'll provision at the iex prompt.
@@ -311,10 +311,10 @@ the private key part being private.
 Here's an example:
 
 ```sh
-mix nerves_key.device create <serial number> --signing-cert ca.cert --signing-key ca.key
+mix nerves_key.device create <serial number> --signer-cert ca.cert --signer-key ca.key
 ```
 
-Just like the signing certs, you can inspect the generated certs with `openssl
+Just like the signer certs, you can inspect the generated certs with `openssl
 x509`. Services that work with these certificates should work with real
 NervesKeys.
 

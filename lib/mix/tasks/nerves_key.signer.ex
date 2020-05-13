@@ -8,7 +8,7 @@ defmodule Mix.Tasks.NervesKey.Signer do
 
   ## create
 
-  Create a new NervesKey signing certificate and private key pair.  This
+  Create a new NervesKey signer certificate and private key pair.  This
   creates a compressible X.509 certificate that can be stored in the
   ATECC508A's limited memory.
 
@@ -65,7 +65,7 @@ defmodule Mix.Tasks.NervesKey.Signer do
     File.write!(key_path, pem_key)
 
     Mix.shell().info("""
-    Created signing cert, #{cert_path} and private key, #{key_path}.
+    Created signer cert, #{cert_path} and private key, #{key_path}.
 
     Please store #{key_path} in a safe place.
 

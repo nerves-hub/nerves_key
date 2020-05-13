@@ -40,7 +40,7 @@ defmodule NervesKey do
 
   Options:
 
-  * :years_valid - how many years this signing key is valid for
+  * :years_valid - how many years this key is valid for
   """
   @spec create_signing_key_pair(keyword()) :: {X509.Certificate.t(), X509.PrivateKey.t()}
   def create_signing_key_pair(opts \\ []) do

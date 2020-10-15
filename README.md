@@ -43,7 +43,7 @@ by adding `nerves_key` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:nerves_key, "~> 0.1.0"}
+    {:nerves_key, "~> 0.5"}
   ]
 end
 ```

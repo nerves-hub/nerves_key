@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.3
+
+* New features
+  * Use the term signer certificate more consistently throughout
+  * Add `mix nerves_key.device` to generate device certifications as a debugging
+    and learning aide. See the README.md for details.
+
 ## v0.5.2
 
 * New features

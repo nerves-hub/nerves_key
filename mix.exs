@@ -53,7 +53,7 @@ defmodule NervesKey.MixProject do
   defp deps do
     [
       {:atecc508a, "~> 0.2.1"},
-      {:nerves_key_pkcs11, "~> 0.1"},
+      {:nerves_key_pkcs11, "~> 0.2"},
       {:ex_doc, "~> 0.20", only: :docs, runtime: false},
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false}
     ]

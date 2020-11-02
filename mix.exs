@@ -20,7 +20,12 @@ defmodule NervesKey.MixProject do
       dialyzer: [
         plt_add_apps: [:public_key, :asn1, :mix],
         ignore_warnings: "dialyzer.ignore-warnings"
-      ]
+      ],
+      preferred_cli_env: %{
+        docs: :docs,
+        "hex.publish": :docs,
+        "hex.build": :docs
+      }
     ]
   end
 
@@ -49,7 +54,7 @@ defmodule NervesKey.MixProject do
     [
       {:atecc508a, "~> 0.2.1"},
       {:nerves_key_pkcs11, "~> 0.1"},
-      {:ex_doc, "~> 0.20", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.20", only: :docs, runtime: false},
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false}
     ]
   end

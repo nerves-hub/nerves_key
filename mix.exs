@@ -18,7 +18,7 @@ defmodule NervesKey.MixProject do
       aliases: [docs: ["docs", &copy_images/1]],
       deps: deps(),
       dialyzer: [
-        plt_add_apps: [:public_key, :asn1, :crypto, :mix],
+        plt_add_apps: [:public_key, :asn1, :mix],
         ignore_warnings: "dialyzer.ignore-warnings"
       ]
     ]
@@ -30,7 +30,7 @@ defmodule NervesKey.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:crypto]
     ]
   end
 

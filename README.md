@@ -208,7 +208,7 @@ device's X.509 certificate is signed, so cloud servers can trust the
 manufacturer serial number.
 
 At this point, you're the manufacturer. Decide how you'd like your serial
-numbers to look. Whatever you pick, it must fit in 16-bytes. Representing the
+numbers to look. Whatever you pick, it must fit in 48-bytes. Representing the
 serial number is ASCII is commonly done. If you don't want to deal with this, do
 what we do (Base32-encode the ATECC508A/608A's globally unique identifier):
 
@@ -388,7 +388,8 @@ following layout:
 Bytes  | Name              | Contents
 ------ | ----------------- | -------------------------
 0-3    | Magic             | 4e 72 76 73
-4-5    | Flags             | TBD. Set to 0
+4      | Flags_MSB         | 0
+5      | Flags_LSB         | 0 = 16 byte serial number, 1 = 32 byte serial number
 6-15   | Board name        | 10 byte name for the board in ASCII (set unused bytes to 0)
-16-31  | Mfg serial number | 16 byte manufacturer-assigned serial number in ASCII (set unused bytes to 0)
-32-63  | User              | These are unassigned
+16-31  | Mfg serial number | Serial number in ASCII (set unused bytes to 0)
+32-63  | Serial# or User   | If Flags == 1, then the rest of the serial number

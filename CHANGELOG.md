@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.4
+
+* New features
+  * Support storing 16+ character serial numbers in the NervesKey
+
 ## v0.5.3
 
 * New features

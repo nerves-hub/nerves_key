@@ -33,7 +33,11 @@ NervesKey and NervesHub documentation.
 
 See [hw/hw.md](hw/hw.md) for hardware information or go to
 [Tindie/NervesKey](https://www.tindie.com/products/troodonsw/nerveskey/) for a
-prebuilt-one. Adafruit now also has an option for purchase as [a breakout board with ATECC608](https://www.adafruit.com/product/4314) and STEMMA QT / Qwiic 4-Pin JST SH connectors. 
+prebuilt-one. 
+There are a few options for purchase as breakout boards with STEMMA QT / Qwiic 4-Pin JST SH connectors
+- Adafruit ATECC608 - https://www.adafruit.com/product/4314
+- Sparkfun ATECC508A - https://www.sparkfun.com/products/15573
+- Sparkfun ATECC608A - https://www.sparkfun.com/products/15838
 
 ## Installation
 

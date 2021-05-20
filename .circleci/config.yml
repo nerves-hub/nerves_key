@@ -63,7 +63,6 @@ jobs:
       - <<: *install_system_deps
       - <<: *install_hex_rebar
       - run: mix deps.get
-      - run: mix compile
       - run: mix test
 
   build_elixir_1_9_otp_22:
@@ -75,7 +74,6 @@ jobs:
       - <<: *install_system_deps
       - <<: *install_hex_rebar
       - run: mix deps.get
-      - run: mix compile
       - run: mix test
 
   build_elixir_1_8_otp_22:
@@ -87,7 +85,6 @@ jobs:
       - <<: *install_system_deps
       - <<: *install_hex_rebar
       - run: mix deps.get
-      - run: mix compile
       - run: mix test
 
   build_elixir_1_7_otp_21:
@@ -99,7 +96,6 @@ jobs:
       - <<: *install_system_deps
       - <<: *install_hex_rebar
       - run: mix deps.get
-      - run: mix compile
       - run: mix test
 
 workflows:

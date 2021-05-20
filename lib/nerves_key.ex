@@ -317,9 +317,7 @@ defmodule NervesKey do
   @spec put_raw_settings(ATECC508A.Transport.t(), binary()) :: :ok
   def put_raw_settings(transport, raw_settings) when is_binary(raw_settings) do
     if byte_size(raw_settings) > @settings_max_length do
-      raise "Settings are too large and won't fit in the NervesKey. The max raw size is #{
-              @settings_max_length
-            }."
+      raise "Settings are too large and won't fit in the NervesKey. The max raw size is #{@settings_max_length}."
     end
 
     padded_settings = pad(raw_settings, @settings_max_length)

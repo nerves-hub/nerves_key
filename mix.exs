@@ -19,7 +19,7 @@ defmodule NervesKey.MixProject do
       deps: deps(),
       dialyzer: [
         plt_add_apps: [:public_key, :asn1, :mix],
-        ignore_warnings: "dialyzer.ignore-warnings"
+        ignore_warnings: ".dialyzer_ignore.exs"
       ],
       preferred_cli_env: %{
         docs: :docs,

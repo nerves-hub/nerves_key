@@ -103,13 +103,8 @@ workflows:
   build_test:
     jobs:
       - build_elixir_1_12_otp_24
-      - build_elixir_1_11_otp_23:
-          context: org-global
-      - build_elixir_1_10_otp_23:
-          context: org-global
-      - build_elixir_1_9_otp_22:
-          context: org-global
-      - build_elixir_1_8_otp_22:
-          context: org-global
-      - build_elixir_1_7_otp_21:
-          context: org-global
+      - build_elixir_1_11_otp_23
+      - build_elixir_1_10_otp_23
+      - build_elixir_1_9_otp_22
+      - build_elixir_1_8_otp_22
+      - build_elixir_1_7_otp_21

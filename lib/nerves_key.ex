@@ -58,6 +58,16 @@ defmodule NervesKey do
   end
 
   @doc """
+  Sign a SHA256 digest
+  """
+  @spec sign_digest(ATECC508A.Transport.t(), binary()) ::
+          {:ok, binary()} | {:error, atom()}
+  def sign_digest(transport, digest) do
+    private_key_slot_id = 0
+    ATECC508A.Request.sign_digest(transport, private_key_slot_id, digest)
+  end
+
+  @doc """
   Return ssl_opts for using the NervesKey
 
   Pass an engine and optionally which certificate that you'd like to use.

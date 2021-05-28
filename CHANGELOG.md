@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.5
+
+* New features
+  * Add `sign_digest/2` and documentation for how to connect to Google Cloud
+    Platform IoT Core. Thanks to Alex McLain for this feature.
+
 ## v0.5.4
 
 * New features

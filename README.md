@@ -141,6 +141,55 @@ hopefully the following code fragment will help:
      })
 ```
 
+### Connecting to Google Cloud Platform IoT Core
+
+While the prior `Tortoise` code snippet works well with services like AWS, Google Cloud Platform (GCP) requires that a device must [create a JWT token](https://cloud.google.com/iot/docs/how-tos/credentials/jwts) in order to [connect to the broker](https://cloud.google.com/iot/docs/how-tos/mqtt-bridge#configuring_mqtt_clients). NervesKey provides the `NervesKey.sign_digest` function to assist with the [JWT signature](https://cloud.google.com/iot/docs/how-tos/credentials/jwts#jwt_signature) portion of Google's documentation. The following code fragment can help with creating the JWT that is required as the MQTT password:
+
+```elixir
+@doc """
+Generate a JSON Web Token used to sign into the Google Cloud Platform
+IoT Core MQTT broker.
+"""
+@spec generate_jwt() :: String.t()
+def generate_jwt do
+  jwt_expiration_in_hours = 4
+  iat = System.os_time(:second)
+  exp = iat + jwt_expiration_in_hours * 60 * 60
+  aud = Application.get_env(:__my_project__, :gcp_project_id)
+
+  header = %{"alg" => "ES256", "typ" => "JWT"}
+  payload = %{"iat" => iat, "exp" => exp, "aud" => aud}
+
+  sign(header, payload)
+end
+
+@doc """
+Sign a JSON Web Token.
+"""
+@spec sign(header :: map, payload :: map) :: String.t()
+def sign(header, payload) do
+  {:ok, transport} = ATECC508A.Transport.I2C.init([])
+
+  encoded_header =
+    header
+    |> Jason.encode!()
+    |> Base.url_encode64(padding: false)
+
+  encoded_payload =
+    payload
+    |> Jason.encode!()
+    |> Base.url_encode64(padding: false)
+
+  digest = :crypto.hash(:sha256, "#{encoded_header}.#{encoded_payload}")
+  {:ok, signature} = NervesKey.sign_digest(transport, digest)
+  encoded_signature = Base.url_encode64(signature, padding: false)
+
+  "#{encoded_header}.#{encoded_payload}.#{encoded_signature}"
+end
+```
+
+This fragment can allow for the dependency injection of `sign` if the firmware needs to run both with and without the ATECC crypto chip (i.e. on the target and on the host). [`JOSE.JWT.sign`](https://hexdocs.pm/jose/JOSE.JWT.html#sign/3) can be used for a host implementation.
+
 ## Preparing for provisioning
 
 The ATECC508A/608A in the NervesKey needs to be provisioned before it can be

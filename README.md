@@ -33,7 +33,7 @@ NervesKey and NervesHub documentation.
 
 See [hw/hw.md](hw/hw.md) for hardware information or go to
 [Tindie/NervesKey](https://www.tindie.com/products/troodonsw/nerveskey/) for a
-prebuilt-one. 
+prebuilt-one.
 There are a few options for purchase as breakout boards with STEMMA QT / Qwiic 4-Pin JST SH connectors
 - Adafruit ATECC608 - https://www.adafruit.com/product/4314
 - Sparkfun ATECC508A - https://www.sparkfun.com/products/15573
@@ -41,8 +41,7 @@ There are a few options for purchase as breakout boards with STEMMA QT / Qwiic 4
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `nerves_key` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `nerves_key` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -52,9 +51,7 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/nerves_key](https://hexdocs.pm/nerves_key).
+The docs can be found at [https://hexdocs.pm/nerves_key](https://hexdocs.pm/nerves_key).
 
 ## General use
 

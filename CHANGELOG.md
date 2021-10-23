@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.0 - 2021-10-23
+
+This release only bumps the version number. It doesn't have any code changes.
+
 ## v0.5.5
 
 * New features

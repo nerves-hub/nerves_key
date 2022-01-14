@@ -52,7 +52,8 @@ defmodule NervesKey.MixProject do
 
   defp deps do
     [
-      {:atecc508a, "~> 1.0 or ~> 0.3.0"},
+      # {:atecc508a, "~> 1.0 or ~> 0.3.0"},
+      {:atecc508a, github: "nerves-hub/atecc508a", branch: "trust-and-go"},
       {:nerves_key_pkcs11, "~> 1.0 or ~> 0.2"},
       {:ex_doc, "~> 0.20", only: :docs, runtime: false},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false}

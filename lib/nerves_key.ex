@@ -63,7 +63,7 @@ defmodule NervesKey do
   end
 
   def manufacturer_sn(transport, :trust_and_go) do
-    {:ok, <<eui48::bytes-11, _::binary>>} = ATECC508A.DataZone.read(transport, 5)
+    {:ok, <<eui48::bytes-12, _::binary>>} = ATECC508A.DataZone.read(transport, 5)
     eui48
   end
 
@@ -170,7 +170,7 @@ defmodule NervesKey do
     ski = :crypto.hash(:sha, <<4>> <> public_key_raw)
     signer_id_hex_str = Integer.to_string(signer_id, 16)
 
-    {:ok, <<eui48::bytes-11, _::binary>>} = ATECC508A.DataZone.read(transport, 5)
+    eui48 = manufacturer_sn(transport, :trust_and_go)
 
     template =
       ATECC508A.Certificate.TrustAndGoTemplate.device(

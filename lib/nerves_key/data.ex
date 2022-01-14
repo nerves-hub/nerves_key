@@ -35,12 +35,12 @@ defmodule NervesKey.Data do
     signer_template =
       signer_cert
       |> X509.Certificate.public_key()
-      |> ATECC508A.Certificate.Template.signer()
+      |> ATECC508A.Certificate.NervesKeyTemplate.signer()
 
     signer_compressed = ATECC508A.Certificate.compress(signer_cert, signer_template)
 
     device_template =
-      ATECC508A.Certificate.Template.device(device_sn, signer_compressed.public_key)
+      ATECC508A.Certificate.NervesKeyTemplate.device(device_sn, signer_compressed.public_key)
 
     device_compressed = ATECC508A.Certificate.compress(device_cert, device_template)
 
@@ -90,12 +90,12 @@ defmodule NervesKey.Data do
     signer_template =
       signer_cert
       |> X509.Certificate.public_key()
-      |> ATECC508A.Certificate.Template.signer()
+      |> ATECC508A.Certificate.NervesKeyTemplate.signer()
 
     signer_compressed = ATECC508A.Certificate.compress(signer_cert, signer_template)
 
     device_template =
-      ATECC508A.Certificate.Template.device(device_sn, signer_compressed.public_key)
+      ATECC508A.Certificate.NervesKeyTemplate.device(device_sn, signer_compressed.public_key)
 
     device_compressed = ATECC508A.Certificate.compress(device_cert, device_template)
 

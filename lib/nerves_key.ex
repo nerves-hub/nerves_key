@@ -15,6 +15,9 @@ defmodule NervesKey do
   @typedoc "Which device/signer certificate pair to use"
   @type certificate_pair() :: :primary | :aux
 
+  @typedoc "Which type of device to use"
+  @type device_type() :: :nerves_key | :trust_and_go
+
   @doc """
   Detect if a NervesKey is available on the transport
   """
@@ -51,10 +54,17 @@ defmodule NervesKey do
   @doc """
   Read the manufacturer's serial number
   """
-  @spec manufacturer_sn(ATECC508A.Transport.t()) :: binary()
-  def manufacturer_sn(transport) do
+  @spec manufacturer_sn(ATECC508A.Transport.t(), device_type()) :: binary()
+  def manufacturer_sn(transport, type \\ :nerves_key)
+
+  def manufacturer_sn(transport, :nerves_key) do
     {:ok, %OTP{manufacturer_sn: serial_number}} = OTP.read(transport)
     serial_number
+  end
+
+  def manufacturer_sn(transport, :trust_and_go) do
+    {:ok, <<eui48::bytes-11, _::binary>>} = ATECC508A.DataZone.read(transport, 5)
+    eui48
   end
 
   @doc """
@@ -101,8 +111,11 @@ defmodule NervesKey do
 
   The device must be programmed for this to work.
   """
-  @spec device_cert(ATECC508A.Transport.t(), certificate_pair()) :: X509.Certificate.t()
-  def device_cert(transport, which \\ :primary) do
+  @spec device_cert(ATECC508A.Transport.t(), certificate_pair(), device_type()) ::
+          X509.Certificate.t()
+  def device_cert(transport, which \\ :primary, type \\ :nerves_key)
+
+  def device_cert(transport, which, :nerves_key) do
     {:ok, device_sn} = Config.device_sn(transport)
     {:ok, device_data} = ATECC508A.DataZone.read(transport, Data.device_cert_slot(which))
 
@@ -113,7 +126,7 @@ defmodule NervesKey do
     {:ok, %OTP{manufacturer_sn: serial_number}} = OTP.read(transport)
     {:ok, public_key_raw} = Data.genkey_raw(transport, false)
 
-    template = ATECC508A.Certificate.Template.device(serial_number, signer_public_key)
+    template = ATECC508A.Certificate.NervesKeyTemplate.device(serial_number, signer_public_key)
 
     compressed = %ATECC508A.Certificate.Compressed{
       data: device_data,
@@ -127,18 +140,87 @@ defmodule NervesKey do
     ATECC508A.Certificate.decompress(compressed)
   end
 
+  def device_cert(transport, which, :trust_and_go) do
+    {:ok, device_sn} = NervesKey.Config.device_sn(transport)
+
+    {:ok, device_data} =
+      ATECC508A.DataZone.read(transport, NervesKey.Data.device_cert_slot(which))
+
+    {:ok,
+     <<_pad1::bytes-4, signer_public_key_raw_x::bytes-32, _pad2::bytes-4,
+       signer_public_key_raw_y::bytes-32>>} =
+      ATECC508A.DataZone.read(transport, NervesKey.Data.signer_pubkey_slot(which))
+
+    signer_public_key_raw = signer_public_key_raw_x <> signer_public_key_raw_y
+
+    {:ok, public_key_raw} = NervesKey.Data.genkey_raw(transport, false)
+
+    <<
+      _compressed_signature::binary-size(64),
+      _compressed_validity::binary-size(3),
+      signer_id::size(16),
+      template_id::size(4),
+      _chain_id::size(4),
+      _serial_number_source::size(4),
+      _format_version::size(4),
+      0::size(8)
+    >> = device_data
+
+    aki = :crypto.hash(:sha, <<4>> <> signer_public_key_raw)
+    ski = :crypto.hash(:sha, <<4>> <> public_key_raw)
+    signer_id_hex_str = Integer.to_string(signer_id, 16)
+
+    {:ok, <<eui48::bytes-11, _::binary>>} = ATECC508A.DataZone.read(transport, 5)
+
+    template =
+      ATECC508A.Certificate.TrustAndGoTemplate.device(
+        device_sn,
+        signer_id,
+        template_id,
+        "eui48_#{eui48}",
+        ski,
+        aki
+      )
+
+    issuer_rdn =
+      X509.RDNSequence.new(
+        "/O=Microchip Technology Inc/CN=Crypto Authentication Signer #{signer_id_hex_str}",
+        :otp
+      )
+
+    subject_rdn =
+      X509.RDNSequence.new(
+        "/O=Microchip Technology Inc/CN=sn" <> Base.encode16(device_sn),
+        :otp
+      )
+
+    compressed = %ATECC508A.Certificate.Compressed{
+      data: device_data,
+      device_sn: device_sn,
+      public_key: public_key_raw,
+      template: template,
+      issuer_rdn: issuer_rdn,
+      subject_rdn: subject_rdn
+    }
+
+    ATECC508A.Certificate.decompress(compressed)
+  end
+
   @doc """
   Read the signer certificate from the slot
   """
-  @spec signer_cert(ATECC508A.Transport.t(), certificate_pair()) :: X509.Certificate.t()
-  def signer_cert(transport, which \\ :primary) do
+  @spec signer_cert(ATECC508A.Transport.t(), certificate_pair(), device_type()) ::
+          X509.Certificate.t()
+  def signer_cert(transport, which \\ :primary, type \\ :nerves_key)
+
+  def signer_cert(transport, which, :nerves_key) do
     {:ok, signer_data} = ATECC508A.DataZone.read(transport, Data.signer_cert_slot(which))
 
     {:ok, <<signer_public_key_raw::64-bytes, _pad::8-bytes>>} =
       ATECC508A.DataZone.read(transport, Data.signer_pubkey_slot(which))
 
     signer_public_key = ATECC508A.Certificate.raw_to_public_key(signer_public_key_raw)
-    template = ATECC508A.Certificate.Template.signer(signer_public_key)
+    template = ATECC508A.Certificate.NervesKeyTemplate.signer(signer_public_key)
 
     compressed = %ATECC508A.Certificate.Compressed{
       data: signer_data,
@@ -146,6 +228,63 @@ defmodule NervesKey do
       template: template,
       issuer_rdn: X509.RDNSequence.new("/CN=Signer", :otp),
       subject_rdn: X509.RDNSequence.new("/CN=Signer", :otp)
+    }
+
+    ATECC508A.Certificate.decompress(compressed)
+  end
+
+  def signer_cert(transport, which, :trust_and_go) do
+    {:ok, signer_data} = ATECC508A.DataZone.read(transport, Data.signer_cert_slot(which))
+
+    {:ok,
+     <<_pad1::bytes-4, signer_public_key_raw_x::bytes-32, _pad2::bytes-4,
+       signer_public_key_raw_y::bytes-32>>} =
+      ATECC508A.DataZone.read(transport, Data.signer_pubkey_slot(which))
+
+    signer_public_key_raw = signer_public_key_raw_x <> signer_public_key_raw_y
+
+    <<
+      _compressed_signature::binary-size(64),
+      _compressed_validity::binary-size(3),
+      signer_id::size(16),
+      _template_id::size(4),
+      _chain_id::size(4),
+      _serial_number_source::size(4),
+      _format_version::size(4),
+      0::size(8)
+    >> = signer_data
+
+    root_public_key_raw =
+      <<189, 84, 230, 109, 227, 135, 84, 132, 0, 107, 83, 174, 21, 128, 213, 10, 160, 105, 231,
+        138, 223, 85, 120, 216, 92, 226, 213, 77, 213, 184, 48, 41, 107, 255, 221, 110, 111, 114,
+        86, 251, 217, 158, 241, 161, 22, 177, 29, 51, 173, 73, 16, 58, 161, 133, 135, 57, 220,
+        250, 228, 55, 225, 157, 99, 78>>
+
+    aki = :crypto.hash(:sha, <<4>> <> root_public_key_raw)
+    ski = :crypto.hash(:sha, <<4>> <> signer_public_key_raw)
+
+    template = ATECC508A.Certificate.TrustAndGoTemplate.signer(signer_id, ski, aki)
+
+    signer_id_hex_str = Integer.to_string(signer_id, 16)
+
+    issuer_rdn =
+      X509.RDNSequence.new(
+        "/O=Microchip Technology Inc/CN=Crypto Authentication Root CA 002",
+        :otp
+      )
+
+    subject_rdn =
+      X509.RDNSequence.new(
+        "/O=Microchip Technology Inc/CN=Crypto Authentication Signer #{signer_id_hex_str}",
+        :otp
+      )
+
+    compressed = %ATECC508A.Certificate.Compressed{
+      data: signer_data,
+      public_key: signer_public_key_raw,
+      template: template,
+      issuer_rdn: issuer_rdn,
+      subject_rdn: subject_rdn
     }
 
     ATECC508A.Certificate.decompress(compressed)
@@ -217,12 +356,13 @@ defmodule NervesKey do
   @spec provision_aux_certificates(
           ATECC508A.Transport.t(),
           X509.Certificate.t(),
-          X509.PrivateKey.t()
+          X509.PrivateKey.t(),
+          device_type()
         ) :: :ok
-  def provision_aux_certificates(transport, signer_cert, signer_key) do
+  def provision_aux_certificates(transport, signer_cert, signer_key, type \\ :nerves_key) do
     check_time()
 
-    manufacturer_sn = manufacturer_sn(transport)
+    manufacturer_sn = manufacturer_sn(transport, type)
     {:ok, device_public_key} = Data.genkey(transport, false)
     {:ok, device_sn} = Config.device_sn(transport)
 

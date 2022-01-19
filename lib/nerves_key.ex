@@ -82,21 +82,23 @@ defmodule NervesKey do
 
   Pass an engine and optionally which certificate that you'd like to use.
   """
-  @spec ssl_opts(ATECC508A.Transport.t(), certificate_pair()) :: keyword()
-  def ssl_opts(transport, which \\ :primary) do
+  @spec ssl_opts(ATECC508A.Transport.t(), certificate_pair(), device_type()) :: keyword()
+  def ssl_opts(transport, which \\ :primary, type \\ :nerves_key) do
     {:ok, engine} = NervesKey.PKCS11.load_engine()
 
     cert =
-      NervesKey.device_cert(transport, which)
+      NervesKey.device_cert(transport, which, type)
       |> X509.Certificate.to_der()
 
     signer_cert =
-      NervesKey.signer_cert(transport, which)
+      NervesKey.signer_cert(transport, which, type)
       |> X509.Certificate.to_der()
 
     transport_info = ATECC508A.Transport.info(transport)
 
-    key = NervesKey.PKCS11.private_key(engine, i2c: i2c_instance(transport_info.bus_name))
+    key =
+      NervesKey.PKCS11.private_key(engine, i2c: i2c_instance(transport_info.bus_name), type: type)
+
     cacerts = [signer_cert]
 
     [key: key, cert: cert, cacerts: cacerts]

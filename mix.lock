@@ -1,5 +1,5 @@
 %{
-  "atecc508a": {:git, "https://github.com/nerves-hub/atecc508a.git", "cd9e1a00bef9df5bc2c56cba4d39099d6241a990", [branch: "trust-and-go"]},
+  "atecc508a": {:git, "https://github.com/nerves-hub/atecc508a.git", "2611b7483239b699bd144e71153da08e8dc849b2", [branch: "trust-and-go"]},
   "circuits_i2c": {:hex, :circuits_i2c, "1.0.1", "3a820dfa04bc5a92d0ec3c572cacb1a665802b2913fbc25784ed5a2020f12626", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "e11393b3f462154ebec5d100859bd5d616e958d9f701e4d62af5764ee84f5213"},
   "dialyxir": {:hex, :dialyxir, "1.1.0", "c5aab0d6e71e5522e77beff7ba9e08f8e02bad90dfbeffae60eaf0cb47e29488", [:mix], [{:erlex, ">= 0.2.6", [hex: :erlex, repo: "hexpm", optional: false]}], "hexpm", "07ea8e49c45f15264ebe6d5b93799d4dd56a44036cf42d0ad9c960bc266c0b9a"},
   "earmark_parser": {:hex, :earmark_parser, "1.4.16", "607709303e1d4e3e02f1444df0c821529af1c03b8578dfc81bb9cf64553d02b9", [:mix], [], "hexpm", "69fcf696168f5a274dd012e3e305027010658b2d1630cef68421d6baaeaccead"},
@@ -9,7 +9,7 @@
   "makeup": {:hex, :makeup, "1.0.5", "d5a830bc42c9800ce07dd97fa94669dfb93d3bf5fcf6ea7a0c67b2e0e4a7f26c", [:mix], [{:nimble_parsec, "~> 0.5 or ~> 1.0", [hex: :nimble_parsec, repo: "hexpm", optional: false]}], "hexpm", "cfa158c02d3f5c0c665d0af11512fed3fba0144cf1aadee0f2ce17747fba2ca9"},
   "makeup_elixir": {:hex, :makeup_elixir, "0.15.2", "dc72dfe17eb240552857465cc00cce390960d9a0c055c4ccd38b70629227e97c", [:mix], [{:makeup, "~> 1.0", [hex: :makeup, repo: "hexpm", optional: false]}, {:nimble_parsec, "~> 1.1", [hex: :nimble_parsec, repo: "hexpm", optional: false]}], "hexpm", "fd23ae48d09b32eff49d4ced2b43c9f086d402ee4fd4fcb2d7fad97fa8823e75"},
   "makeup_erlang": {:hex, :makeup_erlang, "0.1.1", "3fcb7f09eb9d98dc4d208f49cc955a34218fc41ff6b84df7c75b3e6e533cc65f", [:mix], [{:makeup, "~> 1.0", [hex: :makeup, repo: "hexpm", optional: false]}], "hexpm", "174d0809e98a4ef0b3309256cbf97101c6ec01c4ab0b23e926a9e17df2077cbb"},
-  "nerves_key_pkcs11": {:hex, :nerves_key_pkcs11, "1.0.0", "4c93907613182969ff7594c6dafe1eb6608a45dac35eb8ee8df18ab4f323dbac", [:make, :mix], [{:elixir_make, "~> 0.4", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "b7fdb0194e78d0f163e39bd33d3b301f8280d09a182ec42a85abf30e774b8a08"},
+  "nerves_key_pkcs11": {:git, "https://github.com/nerves-hub/nerves_key_pkcs11.git", "fa7f5adb460747804c7af91a8de628fbdf273755", [branch: "trust-and-go"]},
   "nimble_parsec": {:hex, :nimble_parsec, "1.1.0", "3a6fca1550363552e54c216debb6a9e95bd8d32348938e13de5eda962c0d7f89", [:mix], [], "hexpm", "08eb32d66b706e913ff748f11694b17981c0b04a33ef470e33e11b3d3ac8f54b"},
   "x509": {:hex, :x509, "0.8.3", "2306b7e9e9dce35cf16a2608c8d85027fa35f37b33c500b775362bbfd388d224", [:mix], [], "hexpm", "101650f2f35de8528878ae9cd449cb2d0cdcd9974733640ef320fad757594684"},
 }

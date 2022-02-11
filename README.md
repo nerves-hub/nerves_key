@@ -217,7 +217,7 @@ devices.
 
 Due to memory limitations, the ATECC508A/608A has a way to compress X.509
 certificates on chip. See [ATECC Compressed Certificate
-Definition](https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en591852).
+Definition](https://ww1.microchip.com/downloads/en/Appnotes/20006367A.pdf).
 To comply with the limitations of compressible certificates, NervesKey provides
 a mix task to create them:
 

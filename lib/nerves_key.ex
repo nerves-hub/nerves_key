@@ -63,6 +63,16 @@ defmodule NervesKey do
   end
 
   def manufacturer_sn(transport, :trust_and_go) do
+    {:ok, config} = ATECC508A.Configuration.read(transport)
+    %ATECC508A.Configuration{serial_number: sn_bytes} = config
+    Base.encode16(sn_bytes)
+  end
+
+  @doc """
+  IEEE EUI-48 MAC address that can be used as a unique identifier in LAN networking
+  This is only available on `:trust_and_go`
+  """
+  def manufacturer_mac(transport, :trust_and_go) do
     {:ok, <<eui48::bytes-12, _::binary>>} = ATECC508A.DataZone.read(transport, 5)
     eui48
   end

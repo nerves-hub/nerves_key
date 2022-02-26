@@ -182,7 +182,7 @@ defmodule NervesKey do
     ski = :crypto.hash(:sha, <<4>> <> public_key_raw)
     signer_id_hex_str = Integer.to_string(signer_id, 16)
 
-    eui48 = manufacturer_sn(transport, :trust_and_go)
+    eui48 = manufacturer_mac(transport, :trust_and_go)
 
     template =
       ATECC508A.Certificate.TrustAndGoTemplate.device(

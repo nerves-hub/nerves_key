@@ -374,7 +374,12 @@ defmodule NervesKey do
   def provision_aux_certificates(transport, signer_cert, signer_key, type \\ :nerves_key) do
     check_time()
 
-    manufacturer_sn = manufacturer_sn(transport, type)
+    manufacturer_sn = if type == :nerves_key do
+      manufacturer_sn(transport)
+    else
+      manufacturer_mac(transport, :trust_and_go)
+    end
+
     {:ok, device_public_key} = Data.genkey(transport, false)
     {:ok, device_sn} = Config.device_sn(transport)
 

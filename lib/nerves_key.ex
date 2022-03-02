@@ -7,10 +7,8 @@ defmodule NervesKey do
   alias NervesKey.{Config, OTP, Data, ProvisioningInfo}
 
   @build_year DateTime.utc_now().year
-  @settings_slots [8, 7, 6, 5]
-  @settings_max_length Enum.reduce(@settings_slots, 0, fn slot, acc ->
-                         acc + ATECC508A.DataZone.slot_size(slot)
-                       end)
+  @settings_slots_nerves_key [8, 7, 6, 5]
+  @settings_slot_trust_and_go 8
 
   @typedoc "Which device/signer certificate pair to use"
   @type certificate_pair() :: :primary | :aux
@@ -432,28 +430,53 @@ defmodule NervesKey do
   end
 
   @doc """
+  Return the max length of settings
+  """
+  @spec max_settings_len(device_type()) :: integer()
+  def max_settings_len(:nerves_key) do
+    Enum.reduce(@settings_slots_nerves_key, 0, fn slot, acc ->
+      acc + ATECC508A.DataZone.slot_size(slot)
+    end)
+  end
+
+  def max_settings_len(:trust_and_go) do
+    ATECC508A.DataZone.slot_size(@settings_slot_trust_and_go)
+  end
+
+  @doc """
   Return the settings block as a binary
   """
-  @spec get_raw_settings(ATECC508A.Transport.t()) :: {:ok, binary()} | {:error, atom()}
-  def get_raw_settings(transport) do
-    all_reads = Enum.map(@settings_slots, &ATECC508A.DataZone.read(transport, &1))
+  @spec get_raw_settings(ATECC508A.Transport.t(), device_type()) ::
+          {:ok, binary()} | {:error, atom()}
+  def get_raw_settings(transport, device_type \\ :nerves_key) do
+    if device_type == :nerves_key do
+      all_reads = Enum.map(@settings_slots_nerves_key, &ATECC508A.DataZone.read(transport, &1))
 
-    case Enum.find(all_reads, fn {result, _} -> result != :ok end) do
-      nil ->
-        raw = Enum.map_join(all_reads, fn {:ok, contents} -> contents end)
-        {:ok, raw}
+      case Enum.find(all_reads, fn {result, _} -> result != :ok end) do
+        nil ->
+          raw = Enum.map_join(all_reads, fn {:ok, contents} -> contents end)
+          {:ok, raw}
 
-      error ->
-        error
+        error ->
+          error
+      end
+    else
+      case ATECC508A.DataZone.read(transport, @settings_slot_trust_and_go) do
+        {:ok, data} ->
+          {:ok, data}
+
+        error ->
+          error
+      end
     end
   end
 
   @doc """
   Return all of the setting stored in the NervesKey as a map
   """
-  @spec get_settings(ATECC508A.Transport.t()) :: {:ok, map()} | {:error, atom()}
-  def get_settings(transport) do
-    with {:ok, raw_settings} <- get_raw_settings(transport) do
+  @spec get_settings(ATECC508A.Transport.t(), device_type()) :: {:ok, map()} | {:error, atom()}
+  def get_settings(transport, device_type \\ :nerves_key) do
+    with {:ok, raw_settings} <- get_raw_settings(transport, device_type) do
       try do
         settings = :erlang.binary_to_term(raw_settings, [:safe])
         {:ok, settings}
@@ -470,10 +493,10 @@ defmodule NervesKey do
   be used with care since there's no protection against a race condition with
   other NervesKey users.
   """
-  @spec put_settings(ATECC508A.Transport.t(), map()) :: :ok
-  def put_settings(transport, settings) when is_map(settings) do
+  @spec put_settings(ATECC508A.Transport.t(), map(), device_type()) :: :ok
+  def put_settings(transport, settings, device_type \\ :nerves_key) when is_map(settings) do
     raw_settings = :erlang.term_to_binary(settings)
-    put_raw_settings(transport, raw_settings)
+    put_raw_settings(transport, raw_settings, device_type)
   end
 
   @doc """
@@ -482,14 +505,19 @@ defmodule NervesKey do
   This overwrites all of the settings and should be used with care since there's
   no protection against race conditions with other users of this API.
   """
-  @spec put_raw_settings(ATECC508A.Transport.t(), binary()) :: :ok
-  def put_raw_settings(transport, raw_settings) when is_binary(raw_settings) do
-    if byte_size(raw_settings) > @settings_max_length do
-      raise "Settings are too large and won't fit in the NervesKey. The max raw size is #{@settings_max_length}."
+  @spec put_raw_settings(ATECC508A.Transport.t(), binary(), device_type()) :: :ok
+  def put_raw_settings(transport, raw_settings, device_type) when is_binary(raw_settings) do
+    if byte_size(raw_settings) > max_settings_len(device_type) do
+      raise "Settings are too large and won't fit in the NervesKey. The max raw size is #{max_settings_len(device_type)}."
     end
 
-    padded_settings = pad(raw_settings, @settings_max_length)
-    slots = break_into_slots(padded_settings, @settings_slots)
+    padded_settings = pad(raw_settings, max_settings_len(device_type))
+
+    slots =
+      case device_type do
+        :nerves_key -> break_into_slots(padded_settings, @settings_slots_nerves_key)
+        :trust_and_go -> break_into_slots(padded_settings, [@settings_slot_trust_and_go])
+      end
 
     Enum.each(slots, fn {slot, data} -> ATECC508A.DataZone.write(transport, slot, data) end)
   end

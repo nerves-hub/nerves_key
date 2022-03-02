@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0 - 2022-03-02
+
+* New features
+  * Add support for Trust and Go (ATECC608B-TNGTLS) pre-provisioned chips, many functions can now 
+    accept a `device_type()` argument to switch which type of chip it will communicate with. 
+
 ## v1.0.0 - 2021-10-23
 
 This release only bumps the version number. It doesn't have any code changes.

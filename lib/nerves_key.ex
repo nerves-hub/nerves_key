@@ -120,6 +120,16 @@ defmodule NervesKey do
   Read the device certificate from the slot
 
   The device must be programmed for this to work.
+
+  Examples:
+
+  ```
+  iex> NervesKey.device_cert(transport, :primary, :nerves_key)
+  {:OTPCertificate, ...}
+
+  iex> NervesKey.device_cert(transport, :primary, :trust_and_go)
+  {:OTPCertificate, ...}
+  ```
   """
   @spec device_cert(ATECC508A.Transport.t(), certificate_pair(), device_type()) ::
           X509.Certificate.t()

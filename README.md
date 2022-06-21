@@ -39,6 +39,11 @@ There are a few options for purchase as breakout boards with STEMMA QT / Qwiic 4
 - Sparkfun ATECC508A - https://www.sparkfun.com/products/15573
 - Sparkfun ATECC608A - https://www.sparkfun.com/products/15838
 
+Since many of us had a hard time buying ATECC parts, but had a much easier time
+buying [ATECC608B Trust and Go](https://www.microchipdirect.com/product/search/all/ATECC608B-TNGTLSU)
+parts, this library supports these. The Trust and Go parts come provisioned.
+You can still get their serial number and device certificates, though.
+
 ## Installation
 
 The package can be installed by adding `nerves_key` to your list of dependencies in `mix.exs`:

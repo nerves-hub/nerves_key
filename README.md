@@ -46,7 +46,7 @@ The package can be installed by adding `nerves_key` to your list of dependencies
 ```elixir
 def deps do
   [
-    {:nerves_key, "~> 0.5"}
+    {:nerves_key, "~> 1.1"}
   ]
 end
 ```

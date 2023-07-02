@@ -1,10 +1,15 @@
 # Changelog
 
+## v1.2.0 - 2023-07-01
+
+* New features
+  * Fix warnings for Elixir 1.15. Only Elixir 1.11 and later are supported now.
+
 ## v1.1.0 - 2022-03-02
 
 * New features
-  * Add support for Trust and Go (ATECC608B-TNGTLS) pre-provisioned chips, many functions can now 
-    accept a `device_type()` argument to switch which type of chip it will communicate with. 
+  * Add support for Trust and Go (ATECC608B-TNGTLS) pre-provisioned chips, many functions can now
+    accept a `device_type()` argument to switch which type of chip it will communicate with.
 
 ## v1.0.0 - 2021-10-23
 

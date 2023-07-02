@@ -10,7 +10,7 @@ defmodule NervesKey.OTPTest do
   end
 
   test "magic is right" do
-    <<magic::4-bytes, _rest::binary()>> = OTP.to_raw(OTP.new("", ""))
+    <<magic::4-bytes, _rest::binary>> = OTP.to_raw(OTP.new("", ""))
     assert magic == <<0x4E, 0x72, 0x76, 0x73>>
   end
 

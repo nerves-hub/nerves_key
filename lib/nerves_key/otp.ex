@@ -67,7 +67,7 @@ defmodule NervesKey.OTP do
   Convert a raw configuration to a nice map.
   """
   @spec from_raw(raw()) :: {:ok, t()} | {:error, atom()}
-  def from_raw(<<@magic::binary(), flags::16, board_name::10-bytes, manufacturer_sn::48-bytes>>)
+  def from_raw(<<@magic::binary, flags::16, board_name::10-bytes, manufacturer_sn::48-bytes>>)
       when flags == 1 do
     # Long serial number flag
     {:ok,
@@ -80,7 +80,7 @@ defmodule NervesKey.OTP do
   end
 
   def from_raw(
-        <<@magic::binary(), flags::16, board_name::10-bytes, manufacturer_sn::16-bytes,
+        <<@magic::binary, flags::16, board_name::10-bytes, manufacturer_sn::16-bytes,
           user::32-bytes>>
       ) do
     {:ok,
@@ -111,7 +111,7 @@ defmodule NervesKey.OTP do
     board_name = Util.pad_zeros(info.board_name, 10)
     manufacturer_sn = Util.pad_zeros(info.manufacturer_sn, 48)
 
-    <<@magic::binary(), info.flags::size(16), board_name::binary(), manufacturer_sn::binary()>>
+    <<@magic::binary, info.flags::size(16), board_name::binary, manufacturer_sn::binary>>
   end
 
   def to_raw(%__MODULE__{} = info) do
@@ -119,7 +119,7 @@ defmodule NervesKey.OTP do
     manufacturer_sn = Util.pad_zeros(info.manufacturer_sn, 16)
     user = Util.pad_zeros(info.user, 32)
 
-    <<@magic::binary(), info.flags::size(16), board_name::binary(), manufacturer_sn::binary(),
-      user::binary()>>
+    <<@magic::binary, info.flags::size(16), board_name::binary, manufacturer_sn::binary,
+      user::binary>>
   end
 end

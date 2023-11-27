@@ -35,7 +35,8 @@ defmodule NervesKey.MixProject do
 
   def application do
     [
-      extra_applications: [:crypto]
+      extra_applications: [:crypto],
+      mod: {NervesKey.Application, []}
     ]
   end
 

@@ -133,9 +133,18 @@ defmodule NervesKey do
   """
   @spec device_cert(ATECC508A.Transport.t(), certificate_pair(), device_type()) ::
           X509.Certificate.t()
-  def device_cert(transport, which \\ :primary, type \\ :nerves_key)
+  def device_cert(transport, which \\ :primary, type \\ :nerves_key) do
+    with {:ok, cert} <- NervesKey.Cache.device_cert(transport) do
+      cert
+    else
+      nil ->
+        cert = get_device_cert(transport, which, type)
+        NervesKey.Cache.cache_device_cert(transport, cert)
+        cert
+    end
+  end
 
-  def device_cert(transport, which, :nerves_key) do
+  def get_device_cert(transport, which, :nerves_key) do
     {:ok, device_sn} = Config.device_sn(transport)
     {:ok, device_data} = ATECC508A.DataZone.read(transport, Data.device_cert_slot(which))
 
@@ -160,7 +169,7 @@ defmodule NervesKey do
     ATECC508A.Certificate.decompress(compressed)
   end
 
-  def device_cert(transport, which, :trust_and_go) do
+  def get_device_cert(transport, which, :trust_and_go) do
     {:ok, device_sn} = NervesKey.Config.device_sn(transport)
 
     {:ok, device_data} =
@@ -231,9 +240,18 @@ defmodule NervesKey do
   """
   @spec signer_cert(ATECC508A.Transport.t(), certificate_pair(), device_type()) ::
           X509.Certificate.t()
-  def signer_cert(transport, which \\ :primary, type \\ :nerves_key)
+  def signer_cert(transport, which \\ :primary, type \\ :nerves_key) do
+    with {:ok, cert} <- NervesKey.Cache.signer_cert(transport) do
+      cert
+    else
+      nil ->
+        cert = get_signer_cert(transport, which, type)
+        NervesKey.Cache.cache_signer_cert(transport, cert)
+        cert
+    end
+  end
 
-  def signer_cert(transport, which, :nerves_key) do
+  def get_signer_cert(transport, which, :nerves_key) do
     {:ok, signer_data} = ATECC508A.DataZone.read(transport, Data.signer_cert_slot(which))
 
     {:ok, <<signer_public_key_raw::64-bytes, _pad::8-bytes>>} =
@@ -253,7 +271,7 @@ defmodule NervesKey do
     ATECC508A.Certificate.decompress(compressed)
   end
 
-  def signer_cert(transport, which, :trust_and_go) do
+  def get_signer_cert(transport, which, :trust_and_go) do
     {:ok, signer_data} = ATECC508A.DataZone.read(transport, Data.signer_cert_slot(which))
 
     {:ok,

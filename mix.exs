@@ -11,7 +11,7 @@ defmodule NervesKey.MixProject do
       description: description(),
       package: package(),
       source_url: @source_url,
-      elixir: "~> 1.11",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       docs: docs(),

@@ -1,7 +1,9 @@
 # NervesKey
 
-[![CircleCI](https://circleci.com/gh/nerves-hub/nerves_key.svg?style=svg)](https://circleci.com/gh/nerves-hub/nerves_key)
 [![Hex version](https://img.shields.io/hexpm/v/nerves_key.svg "Hex version")](https://hex.pm/packages/nerves_key)
+[![API docs](https://img.shields.io/hexpm/v/nerves_key.svg?label=hexdocs "API docs")](https://hexdocs.pm/nerves_key/NervesKey.html)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/nerves-hub/nerves_key/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/nerves-hub/nerves_key/tree/main)
+[![REUSE status](https://api.reuse.software/badge/github.com/nerves-hub/nerves_key)](https://api.reuse.software/info/github.com/nerves-hub/nerves_key)
 
 The NervesKey is a configured [ATECC508A or ATECC608A Crypto
 Authentication](https://www.microchip.com/wwwproducts/en/ATECC508A) chip that's

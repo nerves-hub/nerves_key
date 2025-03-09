@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2018 Frank Hunleth
+# SPDX-FileCopyrightText: 2018 Justin Schneck
+# SPDX-FileCopyrightText: 2022 Connor Rigby
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule NervesKey.Data do
   @moduledoc """
   This module handles Data Zone data stored in the NervesKey.

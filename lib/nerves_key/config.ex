@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2018 Frank Hunleth
+# SPDX-FileCopyrightText: 2019 Justin Schneck
+# SPDX-FileCopyrightText: 2019 Peter C. Marks
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule NervesKey.Config do
   @moduledoc """
   This is a high level interface to provisioning and using the NervesKey

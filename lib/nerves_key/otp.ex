@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2018 Frank Hunleth
+# SPDX-FileCopyrightText: 2018 Justin Schneck
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 defmodule NervesKey.OTP do
   @moduledoc """
   This module handles OTP data stored in the NervesKey.

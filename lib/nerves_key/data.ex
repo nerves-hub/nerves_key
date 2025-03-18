@@ -74,6 +74,61 @@ defmodule NervesKey.Data do
   end
 
   @doc """
+  Determine what's in all of the data slots
+  """
+  @spec volatile_slot_data(
+          ATECC508A.serial_number(),
+          X509.Certificate.t(),
+          X509.Certificate.t(),
+          binary(),
+          binary()
+        ) ::
+          [
+            {ATECC508A.Request.slot(), binary()}
+          ]
+  def volatile_slot_data(
+        device_sn,
+        device_cert,
+        signer_cert,
+        <<_::128>> = activation_key,
+        <<_::128>> = encryption_key
+      ) do
+    signer_template =
+      signer_cert
+      |> X509.Certificate.public_key()
+      |> ATECC508A.Certificate.NervesKeyTemplate.signer()
+
+    signer_compressed = ATECC508A.Certificate.compress(signer_cert, signer_template)
+
+    device_template =
+      ATECC508A.Certificate.NervesKeyTemplate.device(device_sn, signer_compressed.public_key)
+
+    device_compressed = ATECC508A.Certificate.compress(device_cert, device_template)
+
+    # See README.md for slot contents. We still need to program unused slots in order
+    # to lock the device so specify nothing so they'll get padded with zeros to the
+    # appropriate size.
+    [
+      {1, activation_key},
+      {2, encryption_key},
+      {3, <<>>},
+      {4, <<>>},
+      {5, <<>>},
+      {6, <<>>},
+      {7, <<>>},
+      {8, <<>>},
+      {9, <<>>},
+      {10, device_compressed.data},
+      {11, signer_compressed.public_key},
+      {12, signer_compressed.data},
+      {13, <<>>},
+      {14, <<>>},
+      {15, <<>>}
+    ]
+    |> Enum.map(fn {slot, data} -> {slot, ATECC508A.DataZone.pad_to_slot_size(slot, data)} end)
+  end
+
+  @doc """
   Write all of the slots
   """
   @spec write_slots(ATECC508A.Transport.t(), [{ATECC508A.Request.slot(), binary()}]) :: :ok

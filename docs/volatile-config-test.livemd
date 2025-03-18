@@ -1,0 +1,64 @@
+# Test volatile key config
+
+```elixir
+Mix.install([:nerves_key, :atecc508a])
+```
+
+## Confirm locked down
+
+```elixir
+{:ok, i2c} = ATECC508A.Transport.I2C.init([])
+```
+
+```elixir
+
+# If this is not cleared it has already been unlocked, fully remove power from the ATECC608 to
+# run the tests properly
+{:ok, <<0::32>>} = ATECC508A.Request.get_latch(i2c)
+```
+
+## Signing a digest fails, the private key is locked
+
+```elixir
+digest = ATECC508A.Host.digest("foo")
+# 0x0F is Execution Error and the appropriate failure mode
+{:ok, <<0x0F>>} = NervesKey.sign_digest(i2c, digest)
+```
+
+## Generating a MAC should fail
+
+```elixir
+<<input::32-bytes>> = <<0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef::size(32*8)>>
+# Key 2 is the encryption key and that is locked down
+{:ok, <<0x0F>>} = ATECC508A.Request.mac_deterministic(i2c, 2, input)
+```
+
+## Activate keys
+
+```elixir
+activation_key = "correcthorsenail"
+
+<<_::32-bytes>> = padded_key = <<activation_key::binary, 0::size(16*8)>>
+ATECC508A.Request.auth_volatile_key(i2c, 1, padded_key)
+```
+
+## Signing a digest should work
+
+```elixir
+digest = ATECC508A.Host.digest("foo")
+# 0x0F is Execution Error and the appropriate failure mode
+{:ok, <<_::64-bytes>>} = NervesKey.sign_digest(i2c, digest)
+```
+
+## Generate a MAC should succeed
+
+```elixir
+<<input::32-bytes>> = <<0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef::size(32*8)>>
+# Key 2 is the encryption key and that is locked down
+{:ok, <<mac1::32-bytes>>} = ATECC508A.Request.mac_deterministic(i2c, 2, input)
+{:ok, <<mac2::32-bytes>>} = ATECC508A.Request.mac_deterministic(i2c, 2, input)
+{:ok, <<mac3::32-bytes>>} = ATECC508A.Request.mac_deterministic(i2c, 2, :crypto.strong_rand_bytes(32))
+{:ok, <<mac4::32-bytes>>} = ATECC508A.Request.mac_deterministic(i2c, 2, :crypto.strong_rand_bytes(32))
+IO.inspect(mac3 != mac4, label: "Different input, different output")
+mac1 == mac2
+```

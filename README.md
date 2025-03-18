@@ -24,6 +24,9 @@ decisions to make working with the device easier. It has the following features:
    EEPROM slots
 6. Support auxillary device/signer certificate storage to support pre-production
    experimentation without needing to lock down certificates
+7. (bonus) Optionally lock down the hardware device with an activation key. More
+   complex but offers a method of storing encryption keys. See Volatile key
+   configuration later in this document.
 
 It cannot be stressed enough that the NervesKey library locks down the
 ATECC508A/608A during the provisioning process. This is a feature and is
@@ -450,3 +453,77 @@ Bytes  | Name              | Contents
 6-15   | Board name        | 10 byte name for the board in ASCII (set unused bytes to 0)
 16-31  | Mfg serial number | Serial number in ASCII (set unused bytes to 0)
 32-63  | Serial# or User   | If Flags == 1, then the rest of the serial number
+
+## ATECC608 volatile key configuration
+
+Volatile key configuration is an option for the ATECC608 chips (A & B). You can reference
+[a datasheet here](https://ww1.microchip.com/downloads/en/DeviceDoc/ATECC608A-TFLXTLS-CryptoAuthentication-Data-Sheet-DS40002138A.pdf)
+but it does not describe all the features. If you find anywhere that Microchip publishes
+the datasheet including the Volatile Key functionality we'd love to reference it properly.
+
+This is an alternate but largely compatible configuration of the NervesKey intended to
+add additional security features. It uses two major features of the ATECC608 that the
+508 does not fully support. The Volatile Key config and the Persistent Latch.
+
+The configuration sets up an "activation key" (AES, so any 16 bytes should do) in key slot 1
+as the key to unlock operation of the chip. It also sets up an "encryption key" (also AES)
+in slot 2. These keys are generated outside the chip but also locked into the chip during
+provisioning. The NervesKey Device Private Key (slot 0) and Encryption Key (slot 2) will be
+disabled until the host demonstrates that it has access to the Activation Key. It requires
+authorization. Once authorization is given the chip is fully enabled and can be used as a
+regular NervesKey for mTLS and such. The Encryption Key can also be used to derive other keys
+such as disk encryption or database encryption keys.
+
+It will maintain this authorization using the Persistent Latch. A bit that is persisted as long
+as the device has power. If power is lost authorization goes away and the NervesKey can not be
+used when power is restored unless the authorization is provided again. This allows hooking it
+up to tamper protection in various ways.
+
+The ATECC608 has *severe limitations* in protecting symmetric encryption keys. The AES feature
+passes decrypted information in cleartext over I2C. This configuration is an option for cases
+where you want that higher level of security and are willing to trade off on convenience.
+
+**Important:** If you cannot secure the physical aspect with some kind of tamper mechanism,
+this config adds complexity but really only provides obscurity. With proper tamper protection,
+this should provide reasonable protection for secrets like disk encryption keys. If your board
+has other secure storage via ARM TrustZone or similar you don't need this mechanism. With the
+appropriate physical and electronic protections in place this can add key storage to a
+Raspberry Pi which lacks protected storage.
+
+Providing authorization is up to the application but could be done with a PIN-code, password,
+USB key or something else.
+
+Bytes  | Name                  | Value  | Description
+-----  | --------------------- | ------ | -----------
+14     | I2C_Enable            | 01     | I2C mode
+16     | I2C_Address           | C0     | I2C address of the module (default)
+18     | OTPmode               | AA     | OTP is in read-only mode
+19     | ChipMode              | 00     | Default mode
+20-51  | SlotConfig            | N/A    | See the next table
+69     | VolatileKeyPermission | 81     | VolKeyPermitSlot=1, VolKeyPermitEnable=true
+92-95  | X509Format            | 00..00 | Unused
+96-127 | KeyConfig             | N/A    | See next table
+
+The slots are programmed as follows. This definition is organized to be similar
+to the Microchip Standard TLS Configuration to minimize changes to other
+software. It only differs from the base NervesKey in disabling the private key until authorized
+and including an AES key for use with deriving secrets.
+
+Slot | Description              | SlotConfig | KeyConfig | Primary properties
+---- | ------------------------ | ---------- | --------- | ------------------
+0    | Device private key       | 87 20      | 33 10     | Private key, read only; lockable; persistent disable
+1    | Activation key           | 81 90      | 78 00     | AES key, require RNG
+2    | Encryption key           | 81 90      | 38 10     | AES key, persistent disable
+3    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
+4    | Unused                   | 0F 0F      | 1C 00     | Clear read/write; not lockable
+5    | Settings (Part 3)        | 0F 0F      | 1C 00     | Clear read/write; not lockable
+6    | Settings (Part 2)        | 0F 0F      | 1C 00     | Clear read/write; not lockable
+7    | Settings (Part 1)        | 0F 0F      | 1C 00     | Clear read/write; not lockable
+8    | Settings (Part 0)        | 0F 0F      | 3C 00     | Clear read/write; lockable
+9    | Aux device certificate   | 0F 0F      | 3C 00     | Clear read/write; lockable
+10   | Device certificate       | 0F 2F      | 3C 00     | Clear read only; lockable
+11   | Signer public key        | 0F 2F      | 30 00     | P256; Clear read only; lockable
+12   | Signer certificate       | 0F 2F      | 3C 00     | Clear read only; lockable
+13   | Signer serial number +   | 0F 2F      | 3C 00     | Clear read only; lockable
+14   | Aux signer public key    | 0F 0F      | 3C 00     | Clear read/write; lockable
+15   | Aux signer certificate   | 0F 0F      | 3C 00     | Clear read/write; lockable

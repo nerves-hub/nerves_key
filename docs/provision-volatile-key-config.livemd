@@ -1,0 +1,120 @@
+# Provision Volatile Key Configuration
+
+```elixir
+Mix.install([:nerves_key, :atecc508a])
+```
+
+## Setup
+
+```elixir
+{:ok, i2c} = ATECC508A.Transport.I2C.init([])
+```
+
+## Set up your keys
+
+**Warning!**
+
+Remember that provisioning an ATECC608 chip is permanent. If it goes wrong or you use the wrong key it cannot be fixed, changed or restored.
+
+Particularly for the volatile configuration, losing the `activation key` will mean you cannot use the chip for much of anything.
+
+```elixir
+manufacturer_sn_field = Kino.Input.text("Your serial number", default: "LAB00001")
+board_name_field = Kino.Input.text("Board name", default: "PowerBoard5000")
+cert_name_field = Kino.Input.text("Certificate name", default: "nerveskey-test-signer1")
+
+activation_field = Kino.Input.text("Activation key", default: "correcthorsenail")
+encryption_field = Kino.Input.text("Encryption key", default: "nailhorsecorrect")
+accepted_field = Kino.Input.checkbox("I understand the consequences")
+fields = [manufacturer_sn_field, board_name_field, cert_name_field, activation_field, encryption_field, accepted_field]
+Kino.Layout.grid(fields, columns: 3) |> Kino.render()
+
+# These keys are considered test keys and we share the private key intentionally
+cert_field = Kino.Input.textarea("Signer certificate", default: """
+-----BEGIN CERTIFICATE-----
+MIIBpzCCAU2gAwIBAgIQc3p50MJrn1hkMJ20b6c6cjAKBggqhkjOPQQDAjARMQ8w
+DQYDVQQDDAZTaWduZXIwHhcNMjQwNDE5MTEwMDAwWhcNMjUwNDE5MTEwMDAwWjAR
+MQ8wDQYDVQQDDAZTaWduZXIwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARyJw8a
+eyEXB4jxcsTCgyh8vCa5IV7IaOkGIWunkoTmFh16UkAdAJG3dpQRhiooBxl5+ADe
+vcMFkPeIPScLGZx3o4GGMIGDMBIGA1UdEwEB/wQIMAYBAf8CAQAwDgYDVR0PAQH/
+BAQDAgGGMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAdBgNVHQ4EFgQU
+32moIyTaiQOONSkBK3EUTXXn9kEwHwYDVR0jBBgwFoAU32moIyTaiQOONSkBK3EU
+TXXn9kEwCgYIKoZIzj0EAwIDSAAwRQIgCQ/QP5EJrabRoPs9F6iJR3bEzl20gqGB
+dCVsdeA9dKUCIQDftgLAbaQujGuq3riTcb0T8VsA1ayweAh9PsRZveVSiQ==
+-----END CERTIFICATE-----
+""")
+
+key_field = Kino.Input.textarea("Signer key", default: """
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEID9UV6zO4sVnA+yeCL7SF36dcU841YPmXZfRQ6htENkyoAoGCCqGSM49
+AwEHoUQDQgAEcicPGnshFweI8XLEwoMofLwmuSFeyGjpBiFrp5KE5hYdelJAHQCR
+t3aUEYYqKAcZefgA3r3DBZD3iD0nCxmcdw==
+-----END EC PRIVATE KEY-----
+""")
+
+pk_fields = [cert_field, key_field]
+
+Kino.Layout.grid(pk_fields, columns: 2)
+
+```
+
+```elixir
+activation_key = Kino.Input.read(activation_field)
+encryption_key = Kino.Input.read(encryption_field)
+accepted? = Kino.Input.read(accepted_field)
+
+activation_key_size = byte_size(activation_key)
+# Condition will produce an error for 0 length or >16 byte
+activation_key =
+  cond do
+    activation_key_size == 16 -> activation_key
+    activation_key_size < 16 and activation_key_size > 0 ->
+      pad = 16 - activation_key_size
+      IO.puts("Short key, padding #{pad} bytes")
+      <<activation_key::binary, 0::size(pad * 8)>>
+  end
+
+encryption_key_size = byte_size(encryption_key)
+# Condition will produce an error for 0 length or >16 byte
+encryption_key =
+  cond do
+    encryption_key_size == 16 -> encryption_key
+    encryption_key_size < 16 and encryption_key_size > 0 ->
+      pad = 16 - encryption_key_size
+      IO.puts("Short key, padding #{pad} bytes")
+      <<encryption_key::binary, 0::size(pad * 8)>>
+  end
+
+# Validate some things
+signer_cert =
+  cert_field
+  |> Kino.Input.read()
+  |> X509.Certificate.from_pem!()
+
+signer_key =
+  key_field
+  |> Kino.Input.read()
+  |> X509.PrivateKey.from_pem!()
+
+manufacturer_sn = Kino.Input.read(manufacturer_sn_field)
+board_name = Kino.Input.read(board_name_field)
+```
+
+```elixir
+provision_info =
+  %NervesKey.ProvisioningInfo{
+    manufacturer_sn: manufacturer_sn,
+    board_name: board_name
+  }
+IO.inspect(activation_key)
+if accepted? do
+  IO.inspect(NervesKey.provisioned?(i2c), label: "provisioned")
+  if not NervesKey.provisioned?(i2c) do
+    NervesKey.volatile_provision(i2c, provision_info, signer_cert, signer_key, activation_key, encryption_key)
+  else
+    IO.puts("Already provisioned.")
+  end
+else
+  IO.puts("You have not confirmed that you understand the consequences :)")
+end
+```

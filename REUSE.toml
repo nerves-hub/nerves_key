@@ -35,9 +35,10 @@ SPDX-License-Identifier = "SHL-0.51"
 [[annotations]]
 path = [
  "hw/assets/assembled.jpg",
- "hw/assets/bottom_mount.jpg"
+ "hw/assets/bottom_mount.jpg",
+ "docs/provision-volatile-key-config.livemd",
+ "docs/volatile-config-test.livemd"
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "None"
 SPDX-License-Identifier = "CC0-1.0"
-

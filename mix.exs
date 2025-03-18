@@ -11,7 +11,7 @@ defmodule NervesKey.MixProject do
       description: description(),
       package: package(),
       source_url: @source_url,
-      elixir: "~> 1.13",
+      elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       docs: docs(),
@@ -64,7 +64,7 @@ defmodule NervesKey.MixProject do
 
   defp deps do
     [
-      {:atecc508a, "~> 1.1 or ~> 0.3.0"},
+      {:atecc508a, "~> 1.4"},
       {:nerves_key_pkcs11, "~> 1.0 or ~> 0.2"},
       {:ex_doc, "~> 0.20", only: :docs, runtime: false},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false}

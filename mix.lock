@@ -1,5 +1,5 @@
 %{
-  "atecc508a": {:hex, :atecc508a, "1.3.0", "52c15f59a2ffba9615f9404bbb3251b120f427690ea6a8e1f1cd2d9fe8265354", [:mix], [{:circuits_i2c, "~> 0.2 or ~> 1.0 or ~> 2.0", [hex: :circuits_i2c, repo: "hexpm", optional: false]}, {:x509, "~> 0.5.1 or ~> 0.6", [hex: :x509, repo: "hexpm", optional: false]}], "hexpm", "ce4345ed949e962682b0d479cddf3bb94169d06f015544cd6450d76cbbfb95a5"},
+  "atecc508a": {:hex, :atecc508a, "1.4.0", "272eda41001765b11356be43bc25314c73c47e4144a3eba96db6feddf0142e68", [:mix], [{:circuits_i2c, "~> 0.2 or ~> 1.0 or ~> 2.0", [hex: :circuits_i2c, repo: "hexpm", optional: false]}, {:x509, "~> 0.5.1 or ~> 0.6", [hex: :x509, repo: "hexpm", optional: false]}], "hexpm", "3643442e4fa53c8cf85c3db0dab8f683f3e91bf69595cc2ee5b28d1742872f65"},
   "circuits_i2c": {:hex, :circuits_i2c, "2.1.0", "0656ea5d106744c498a8cd778f39c0685ab574e3da7159814cfbfe709001f0e5", [:make, :mix], [{:elixir_make, "~> 0.6", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "3751a875a9d728080fdbc5fd352f728d4746a82e17e52f4444c406200349f6ac"},
   "dialyxir": {:hex, :dialyxir, "1.4.5", "ca1571ac18e0f88d4ab245f0b60fa31ff1b12cbae2b11bd25d207f865e8ae78a", [:mix], [{:erlex, ">= 0.2.7", [hex: :erlex, repo: "hexpm", optional: false]}], "hexpm", "b0fb08bb8107c750db5c0b324fa2df5ceaa0f9307690ee3c1f6ba5b9eb5d35c3"},
   "earmark_parser": {:hex, :earmark_parser, "1.4.43", "34b2f401fe473080e39ff2b90feb8ddfeef7639f8ee0bbf71bb41911831d77c5", [:mix], [], "hexpm", "970a3cd19503f5e8e527a190662be2cee5d98eed1ff72ed9b3d1a3d466692de8"},
@@ -11,5 +11,5 @@
   "makeup_erlang": {:hex, :makeup_erlang, "1.0.2", "03e1804074b3aa64d5fad7aa64601ed0fb395337b982d9bcf04029d68d51b6a7", [:mix], [{:makeup, "~> 1.0", [hex: :makeup, repo: "hexpm", optional: false]}], "hexpm", "af33ff7ef368d5893e4a267933e7744e46ce3cf1f61e2dccf53a111ed3aa3727"},
   "nerves_key_pkcs11": {:hex, :nerves_key_pkcs11, "1.2.0", "73fa6796a515de9d4feaad9bc68b2c63b1e5ba9cb32328fa2b349b896a2d18da", [:make, :mix], [{:elixir_make, "~> 0.4", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm", "d4e515edb8838d0de7776ca920cc0e5b6767de95c15070979492d0315b72de19"},
   "nimble_parsec": {:hex, :nimble_parsec, "1.4.2", "8efba0122db06df95bfaa78f791344a89352ba04baedd3849593bfce4d0dc1c6", [:mix], [], "hexpm", "4b21398942dda052b403bbe1da991ccd03a053668d147d53fb8c4e0efe09c973"},
-  "x509": {:hex, :x509, "0.8.10", "5d1ec6d5f4db31982f9dc34e6a1eebd631d04599e0b6c1c259f1dadd4495e11f", [:mix], [], "hexpm", "a191221665af28b9bdfff0c986ef55f80e126d8ce751bbdf6cefa846410140c0"},
+  "x509": {:hex, :x509, "0.9.2", "a75aa605348abd905990f3d2dc1b155fcde4e030fa2f90c4a91534405dce0f6e", [:mix], [], "hexpm", "4c5ede75697e565d4b0f5be04c3b71bb1fd3a090ea243af4bd7dae144e48cfc7"},
 }

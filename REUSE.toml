@@ -3,6 +3,7 @@ version = 1
 [[annotations]]
 path = [
  ".circleci/config.yml",
+ ".credo.exs",
  ".dialyzer_ignore.exs",
  ".formatter.exs",
  ".github/dependabot.yml",

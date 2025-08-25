@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.3.0 - 2025-08-25
+
+* New features
+  * Support volatile keys to allow access to secret storage as long as it's
+    powered. Cutting the power via a tamper switch or any other means requires
+    reauthorization. Thanks to @lawik for this feature.
+  * Support the REUSE specification for licensing and copyright
+
+* Fixes
+  * Fixed Elixir 1.19 warnings
+
 ## v1.2.0 - 2023-07-01
 
 * New features

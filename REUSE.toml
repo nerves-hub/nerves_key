@@ -6,6 +6,7 @@ path = [
  ".credo.exs",
  ".dialyzer_ignore.exs",
  ".formatter.exs",
+ ".github/CODEOWNERS",
  ".github/dependabot.yml",
  ".gitignore",
  "CHANGELOG.md",

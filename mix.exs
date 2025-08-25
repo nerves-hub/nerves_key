@@ -18,6 +18,7 @@ defmodule NervesKey.MixProject do
       aliases: [docs: ["docs", &copy_images/1]],
       deps: deps(),
       dialyzer: [
+        flags: [:unmatched_returns, :error_handling, :missing_return, :extra_return],
         plt_add_apps: [:public_key, :asn1, :mix],
         ignore_warnings: ".dialyzer_ignore.exs"
       ],

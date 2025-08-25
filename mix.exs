@@ -21,12 +21,7 @@ defmodule NervesKey.MixProject do
         flags: [:unmatched_returns, :error_handling, :missing_return, :extra_return],
         plt_add_apps: [:public_key, :asn1, :mix],
         ignore_warnings: ".dialyzer_ignore.exs"
-      ],
-      preferred_cli_env: %{
-        docs: :docs,
-        "hex.publish": :docs,
-        "hex.build": :docs
-      }
+      ]
     ]
   end
 
@@ -38,6 +33,10 @@ defmodule NervesKey.MixProject do
     [
       extra_applications: [:crypto]
     ]
+  end
+
+  def cli do
+    [preferred_envs: %{docs: :docs, "hex.publish": :docs, "hex.build": :docs}]
   end
 
   defp description do

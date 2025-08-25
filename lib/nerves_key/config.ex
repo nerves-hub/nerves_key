@@ -370,7 +370,7 @@ defmodule NervesKey.Config do
   @spec configure(ATECC508A.Transport.t()) :: {:error, atom()} | :ok
   def configure(transport, lock? \\ true) do
     with {:ok, info} <- Configuration.read(transport),
-         provision_info = %Configuration{
+         provision_info = %{
            info
            | key_config: @key_config,
              slot_config: @slot_config,
@@ -396,7 +396,7 @@ defmodule NervesKey.Config do
   def configure_volatile(transport, lock? \\ true) do
     with {:ok, info} <- Configuration.read(transport, :atecc608),
          provision_info =
-           %Configuration.Config608{
+           %{
              info
              | key_config: @key_config,
                slot_config: @slot_config,

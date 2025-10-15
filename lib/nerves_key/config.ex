@@ -12,6 +12,7 @@ defmodule NervesKey.Config do
   """
 
   alias ATECC508A.Configuration
+  alias NervesKey.ProvisioningInfo
 
   # See README.md for the SlotConfig and KeyConfig values. These are copied verbatim.
   @key_config <<0x33, 0x00, 0x1C, 0x00, 0x1C, 0x00, 0x1C, 0x00, 0x1C, 0x00, 0x1C, 0x00, 0x1C,
@@ -419,6 +420,38 @@ defmodule NervesKey.Config do
       else
         :ok
       end
+    end
+  end
+
+  @doc """
+  Helper for getting provisioning information.
+  """
+  @spec provisioning_info(ATECC508A.Transport.t()) ::
+          {:error, atom()} | {:ok, ProvisioningInfo.t()}
+  def provisioning_info(transport) do
+    with {:ok, info} <- Configuration.read(transport) do
+      mode =
+        if info.lock_value == 0 do
+          case Configuration.read_all_raw(transport) do
+            {:ok, <<_::20-bytes, 0x87::8, 0x20::8, _::74-bytes, 0x33::8, 0x10::8, _::binary>>} ->
+              :volatile
+
+            {:ok, <<_::20-bytes, 0x87::8, 0x20::8, _::binary>>} ->
+              :regular
+
+            {:ok, _bin} ->
+              :unrecognized
+          end
+        else
+          :unprovisioned
+        end
+
+      {:ok,
+       %ProvisioningInfo{
+         manufacturer_sn: Base.encode32(info.serial_number, padding: false),
+         board_name: "NervesKey",
+         mode: mode
+       }}
     end
   end
 

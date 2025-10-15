@@ -507,15 +507,19 @@ defmodule NervesKey do
   @doc """
   Return default provisioning info for a NervesKey
 
-  This function is used for pre-programmed NervesKey devices. The
-  serial number is a Base32-encoded version of the ATECC508A/608A's globally unique
-  serial number. No additional care is needed to keep the number unique.
+  This function is particularly useful for pre-programmed NervesKey devices.
+  Theserial number is a Base32-encoded version of the ATECC508A/608A's globally
+  unique serial number. No additional care is needed to keep the number unique.
+
+  It also provides information about the provisioning mode. Helping identify a
+  volatile configuration or custom, unrecognized configurations.
   """
   @spec default_info(ATECC508A.Transport.t()) :: ProvisioningInfo.t()
   def default_info(transport) do
-    {:ok, sn} = Config.device_sn(transport)
-
-    %ProvisioningInfo{manufacturer_sn: Base.encode32(sn, padding: false), board_name: "NervesKey"}
+    case Config.provisioning_info(transport) do
+      {:ok, info} -> info
+      _ -> ProvisioningInfo.default()
+    end
   end
 
   @doc """

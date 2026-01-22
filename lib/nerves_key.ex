@@ -659,7 +659,7 @@ defmodule NervesKey do
   end
 
   defp check_time() do
-    unless DateTime.utc_now().year >= @build_year do
+    if DateTime.utc_now().year < @build_year do
       raise """
       It doesn't look like the clock has been set. Check that `nerves_time` is running
       or something else is providing time.

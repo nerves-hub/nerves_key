@@ -1,7 +1,7 @@
 # NervesKey
 
 [![Hex version](https://img.shields.io/hexpm/v/nerves_key.svg "Hex version")](https://hex.pm/packages/nerves_key)
-[![API docs](https://img.shields.io/hexpm/v/nerves_key.svg?label=hexdocs "API docs")](https://hexdocs.pm/nerves_key/NervesKey.html)
+[![API docs](https://img.shields.io/hexpm/v/nerves_key.svg?label=hexdocs "API docs")](https://nerves-key.hexdocs.pm/NervesKey.html)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/nerves-hub/nerves_key/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/nerves-hub/nerves_key/tree/main)
 [![REUSE status](https://api.reuse.software/badge/github.com/nerves-hub/nerves_key)](https://api.reuse.software/info/github.com/nerves-hub/nerves_key)
 
@@ -61,7 +61,7 @@ def deps do
 end
 ```
 
-The docs can be found at [https://hexdocs.pm/nerves_key](https://hexdocs.pm/nerves_key).
+The docs can be found at [https://nerves-key.hexdocs.pm](https://hexdocs.pm/nerves_key).
 
 ## General use
 
@@ -195,7 +195,7 @@ def sign(header, payload) do
 end
 ```
 
-This fragment can allow for the dependency injection of `sign` if the firmware needs to run both with and without the ATECC crypto chip (i.e. on the target and on the host). [`JOSE.JWT.sign`](https://hexdocs.pm/jose/JOSE.JWT.html#sign/3) can be used for a host implementation.
+This fragment can allow for the dependency injection of `sign` if the firmware needs to run both with and without the ATECC crypto chip (i.e. on the target and on the host). [`JOSE.JWT.sign`](https://jose.hexdocs.pm/JOSE.JWT.html#sign/3) can be used for a host implementation.
 
 ## Preparing for provisioning
 

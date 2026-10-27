@@ -502,16 +502,23 @@ defmodule NervesKey.Config do
     end
   end
 
+  @doc """
+  Check whether an ATECC608's configuration is the volatile one this library
+  provisions. Takes a transport, or a `Config608` already read from one.
+  """
+  @spec volatile_config_compatible?(ATECC508A.Transport.t() | Configuration.Config608.t()) ::
+          {:error, atom()} | {:ok, boolean()} | boolean()
+  def volatile_config_compatible?(%Configuration.Config608{} = info) do
+    info.lock_config == 0 and
+      info.chip_mode == 0 and
+      slot_config_volatile(info.slot_config) and
+      key_config_volatile(info.key_config) and
+      info.volatile_key_permission.enabled?
+  end
+
   def volatile_config_compatible?(transport) do
     with {:ok, %Configuration.Config608{} = info} <- Configuration.read(transport, :atecc608) do
-      answer =
-        info.lock_config == 0 and
-          info.chip_mode == 0 and
-          slot_config_volatile(info.slot_config) and
-          key_config_volatile(info.key_config) and
-          info.volatile_key_permission.enabled?
-
-      {:ok, answer}
+      {:ok, volatile_config_compatible?(info)}
     end
   end
 
@@ -524,10 +531,13 @@ defmodule NervesKey.Config do
 
   defp slot_config_compatible(_), do: false
 
+  # Slot 1 is 81 90 as set_volatile_key/2 writes it (91 90 has NoMac set, which
+  # earlier chips may carry); slot 2 must be 81 90, secret and not readable.
   defp slot_config_volatile(
-         <<0x87, 0x20, 0x91, 0x90, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 0x0F, 0x2F,
-           0x0F, 0x2F, 0x0F, 0x2F, 0x0F, 0x2F, _, _, _, _>>
-       ),
+         <<0x87, 0x20, slot1, 0x90, 0x81, 0x90, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 0x0F,
+           0x2F, 0x0F, 0x2F, 0x0F, 0x2F, 0x0F, 0x2F, _, _, _, _>>
+       )
+       when slot1 in [0x81, 0x91],
        do: true
 
   defp slot_config_volatile(_) do
@@ -542,9 +552,10 @@ defmodule NervesKey.Config do
 
   defp key_config_compatible(_), do: false
 
+  # Slot 2 must be 38 10: an AES key, disabled unless the persistent latch is set.
   defp key_config_volatile(
-         <<0x33, 0x10, 0x78, 0x0, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 0x3C, 0x00,
-           0x30, 0x00, 0x3C, 0x00, 0x3C, 0x00, _, _, _, _>>
+         <<0x33, 0x10, 0x78, 0x00, 0x38, 0x10, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 0x3C,
+           0x00, 0x30, 0x00, 0x3C, 0x00, 0x3C, 0x00, _, _, _, _>>
        ),
        do: true
 
